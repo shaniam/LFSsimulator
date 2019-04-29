@@ -14,6 +14,7 @@
 #include <sys/types.h> 
 #include <utility>
 using namespace std;
+int kilob=1024;
 void hardDrive(){
 	//ofstream  segment;
 	if (mkdir("DRIVE", 0777));
@@ -68,13 +69,13 @@ pair<int, int> find(){
 		char* other=&data;
 		string iter=to_string(i);
         	string file=name+iter+".txt";
-		int block=990000;
+		int block=1047552;
 		while (block>=0){
 			in.open(file);
 			in.ignore(block);
 			//block=0;
 			good=true;
-			for (int x=0; x<1048576; x++){
+			for (int x=0; x<1024; x++){
                 		in.read(other, 1);
 				if (data!='0'){
 					good=false;
@@ -83,8 +84,9 @@ pair<int, int> find(){
 				//block=x;
 				//
         		}
-			if (good==true){return make_pair(i,block);}
-			block-=10000;
+		if (good==true){return make_pair(i,block);}
+		in.close();
+		block-=1024;
 		}
 		if (good==true){
 			return make_pair(i, block);
@@ -105,7 +107,7 @@ void import(string file){
 	fstream out(name);
 	out.ignore(loc.second);
 	out << (node->name);
-	cerr << (node->size);
+	//cerr << (node->size);
 	out.close();
 
         /*infile.open(file);
@@ -116,16 +118,31 @@ void import(string file){
         /* insert into segments*/
 
         //infile.close();
-	loc=find();
 	ifstream in(node->name);
-	out.open(name);
-	cerr << name << endl;
-	out.ignore(loc.second);
-	char x;
-	while(in.read(&x,1)){
-		out << x;
+	//out.open(name);
+	while(in.is_open()){
+		loc=find();
+		out.open(name);
+		//ifstream in(node->name);
+		if (!out.is_open()){
+			cerr << "out not open" << endl;
+		}
+		if (!in.is_open()){
+			cerr << node->name << endl;
+		}
+		out.ignore(loc.second);
+		cerr << loc.second << endl;
+		char x;
+		int i=0;
+		while(in.read(&x,1)){
+			out << x;
+			i++;
+			if (i==kilob){
+			break;
+			}
+		}
+		out.close();
 	}
-	out.close();
 	in.close();
 	
 }

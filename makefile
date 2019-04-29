@@ -1,6 +1,5 @@
 all: main.cpp
-	g++ main.cpp -o ./main
+	g++ main.cpp -g -o ./main
 clean:
-	rm -rf *.txt
 	rm -rf main
 	rm -r DRIVE
