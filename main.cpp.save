@@ -13,17 +13,8 @@
 #include <sys/stat.h> 
 #include <sys/types.h> 
 #include <utility>
-#define KILO 1024
 using namespace std;
-int inodes=10*KILO;
-int mapindex=0;
-vector<int> imap(inodes,-1);
-vector<char>inMem(KILO*KILO, '0');
-int file=0;
-int inmem_index=0;
-int segindex=KILO;
-
-
+int kilob=1024;
 void hardDrive(){
 	if (mkdir("DRIVE", 0777));
 	else{
@@ -48,7 +39,7 @@ class inode{
 	public:
 		string name;
 		int size;
-		vector<int> blocks={};
+		vector<int*> blocks={};
 		//blocks.reserve(128);
 		inode(string names){
 			name=names;
@@ -59,7 +50,7 @@ class inode{
 			in_file.close();
 			//blocks.reserve(128);
 			for (int i=0; i<128; i++){
-				blocks.push_back(-1);
+				blocks.push_back(NULL);
 			}
 		}
 };
@@ -96,7 +87,7 @@ pair<int, int> find(){
 		}
 		if (good==true){
 			return make_pair(i, block);
-		}
+ 		}
 		else{
 		continue;
 		}
@@ -104,62 +95,10 @@ pair<int, int> find(){
 	}
 
 }
-void import(string file1, string file2){
-	ifstream src;
-	ofstream dst;
-	
-	src.open(file1, ios::in | ios::binary);
-  	dst.open(file2, ios::out | ios::binary);
-  	dst << src.rdbuf();
+void import(string file){
+        inode* node= new inode(file);
 
-	src.close();
-	dst.close();
-        inode* node= new inode(file2);
-	imap[mapindex]=file+segindex;
-	
-	int i=0;
-	string node_info=node->name+to_string(node->size);
-	for (int x: node->blocks){
-		node_info+=to_string(x);
-	}
-	for(char x: node_info){
-		inMem[segindex+i]=x;
-		i++;
-	}
-	/*for (auto x: inode->name);
-		inMem[segindex+i]=x;*/
-	mapindex++;
-	segindex+=1024;
-	//char* x=inMem;        
-	ifstream in;
-	in.open(file2);
-	i=0;
-	char x;
-	while(in.read(&x ,1)){
-		inMem[segindex+i]=x;
-		i++;
-		if(segindex==KILO*KILO){
-		//dump;
-		/*for (auto x: inMem){
-			
-		}*/
-		cerr << "houstin, we have a problem" << endl;
-		break;
-		}
-		if(segindex%1024==0){
-			//update inode;
-		}
-	}
-	ofstream check;
-	check.open("check.txt");
-	for (auto x: inMem){
-        check << x ;
-        }
-	in.close();
-	//if(segindex==1024*1024);
-	
-	#if 0
-	//pair<int, int> loc=find();
+        pair<int, int> loc=find();
  	string name="DRIVE/SEGMENT";
 	name=name+to_string(loc.first)+".txt";
 	fstream out(name);
@@ -195,26 +134,18 @@ void import(string file1, string file2){
 		while(in.read(&x,1)){
 			out << x;
 			i++;
-			if (i==KILO){
+			if (i==kilob){
 			break;
 			}
 		}
 		out.close();
 	}
-
-	/*for (auto x: inMem){
-	cerr << x << endl;
-	}*/
 	in.close();
-	#endif
+	
 }
 int main(){
-	for (int i=0; i<inodes; i++){
-		imap[i]=-1;
-	}
-	
 	hardDrive();
 	//pair<int, int> test=find();
-	import("other.txt", "hi.txt");
+	import("other.txt");
 
 }
