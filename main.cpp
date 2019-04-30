@@ -16,7 +16,6 @@
 using namespace std;
 int kilob=1024;
 void hardDrive(){
-	//ofstream  segment;
 	if (mkdir("DRIVE", 0777));
 	else{
 	}
@@ -28,13 +27,11 @@ void hardDrive(){
 	ofstream outfile(file);
 	if(!outfile.is_open()){
 		cerr << "oh no!" << endl;
-		//continue;
 		return;
 	}
 	for (int x=0; x<1048576; x++){
 		outfile << '0';
 	}
-//	}
 	outfile.close();
 	}
 }
@@ -128,7 +125,7 @@ void import(string file){
 			cerr << "out not open" << endl;
 		}
 		if (!in.is_open()){
-			cerr << node->name << endl;
+			cerr << "in not open" << endl;
 		}
 		out.ignore(loc.second);
 		cerr << loc.second << endl;
