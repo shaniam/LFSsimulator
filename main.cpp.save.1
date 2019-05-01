@@ -23,7 +23,7 @@ int inmem_index=0;
 int segindex=KILO;
 vector<int> ssbnodes={};
 
-/*void hardDrive(){
+void hardDrive(){
 	if (mkdir("DRIVE", 0777));
 	else{
 	}
@@ -37,42 +37,11 @@ vector<int> ssbnodes={};
 		cerr << "oh no!" << endl;
 		return;
 	}
-	int y=0;
-	int* x=&y;
-	char* z=(char*) x;
 	for (int x=0; x<1048576; x++){
-		//outfile << '0';
-		outfile.write(z, 1);
+		outfile << '0';
 	}
 	outfile.close();
 	}
-}*/
-void hardDrive(){
-if (mkdir("DRIVE", 0777));
-else{
-}
-
-string name="DRIVE/SEGMENT";
-
-for (int i=0; i<64; i++){
-string iter=to_string(i);
-string file=name+iter+".txt";
-ofstream outfile(file);
-if(!outfile.is_open()){
-cerr << "oh no!" << endl;
-return;
-}
-
-char buffer[1] = {0};
-
-for (int x=0; x<1048576; x++){
-outfile.write(buffer, 1);
-}
-
-//delete[] buffer;
-
-outfile.close();
-}
 }
 class inode{
 	public:
@@ -103,12 +72,12 @@ void import(string file1, string file2){
 	src.close();
 	dst.close();
         inode* node= new inode(file2);
-	imap[mapindex]=file+segindex;
+	/*
+	//imap[mapindex]=file+segindex;
+
 	int i=0;
-	string node_info;
-	#if 0
-	/*=node->name+to_string(node->size);
-	/*for (int x: node->blocks){
+	string node_info=node->name+to_string(node->size);
+	for (int x: node->blocks){
 		node_info+=to_string(x);
 	}
 	int inode_loc=segindex;
@@ -119,13 +88,12 @@ void import(string file1, string file2){
 	}
 	/*for (auto x: inode->name);
 		inMem[segindex+i]=x;*/
-	mapindex++;
+	mapindex++;*/
 	segindex+=1024;
-	#endif
 	//char* x=inMem;
 	ifstream in;
 	in.open(file2);
-	//int i=0;
+	i=0;
 	char x;
 	vector<int> blocks_1(128,-1);
 	while(in.read(&x ,1)){
@@ -163,13 +131,9 @@ void import(string file1, string file2){
         }
         //int inode_loc=segindex;
         //int curr_file=file;
-        i=0;
-	for(char x: node_info){
-                //dst1<<x;
-       
-		inMem[segindex+i]=x;
+        for(char x: node_info){
+                dst1<<x;
                 i++;
-	         //i++;
         }
 	dst1.close();
 	
