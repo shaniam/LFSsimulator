@@ -7,13 +7,14 @@
 #include <fstream>
 #include <algorithm>
 #include <string>
-#include <bits/stdc++.h> 
-#include <iostream> 
-#include <sys/stat.h> 
-#include <sys/types.h> 
+#include <iostream>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <utility>
 #define KILO 1024
+
 using namespace std;
+
 int inodes=10*KILO;
 int mapindex=0;
 vector<int> imap(inodes,-1);
@@ -48,32 +49,31 @@ vector<int> ssbnodes={};
 	}
 }*/
 void hardDrive(){
-if (mkdir("DRIVE", 0777));
-else{
+	if (mkdir("DRIVE", 0777));
+	else{
+		}
+
+	string name="DRIVE/SEGMENT";
+
+	for (int i=0; i<64; i++){
+		string iter=to_string(i);
+		string file=name+iter+".txt";
+		ofstream outfile(file, ios::binary);
+		if(!outfile.is_open()){
+			cerr << "oh no!" << endl;
+			return;
+		}
+
+		int y = 0;
+
+		for (int x = 0; x < 1048576 / 4; x++){
+			outfile.write(reinterpret_cast<const char*>(&y), sizeof(y));
+		}
+
+		outfile.close();
+	}
 }
 
-string name="DRIVE/SEGMENT";
-
-for (int i=0; i<64; i++){
-string iter=to_string(i);
-string file=name+iter+".txt";
-ofstream outfile(file);
-if(!outfile.is_open()){
-cerr << "oh no!" << endl;
-return;
-}
-
-char buffer[1] = {0};
-
-for (int x=0; x<1048576; x++){
-outfile.write(buffer, 1);
-}
-
-//delete[] buffer;
-
-outfile.close();
-}
-}
 class inode{
 	public:
 		string name;
@@ -81,7 +81,7 @@ class inode{
 		vector<int> blocks={};
 		inode(string names){
 			name=names;
-			std::ifstream in_file(name, ios::binary);
+			ifstream in_file(name, ios::binary);
 			in_file.seekg(0, ios::end);
 			size=in_file.tellg();
 			in_file.close();
@@ -166,15 +166,15 @@ void import(string file1, string file2){
         i=0;
 	for(char x: node_info){
                 //dst1<<x;
-       
+
 		inMem[segindex+i]=x;
                 i++;
 	         //i++;
         }
 	dst1.close();
-	
+
 	//if(segindex==1024*1024);
-	
+
 	#if 0
 	//pair<int, int> loc=find();
  	string name="DRIVE/SEGMENT";
@@ -229,7 +229,7 @@ int main(){
 	for (int i=0; i<inodes; i++){
 		imap[i]=-1;
 	}
-	
+
 	hardDrive();
 	//pair<int, int> test=find();
 	import("other.txt", "hi.txt");
