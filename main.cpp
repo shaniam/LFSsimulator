@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <cstring>
+#include <ctime>
 #include "inode.h"
 #define KILO 1024
 
@@ -16,10 +17,24 @@ using namespace std;
 
 vector<char> openBlockInSegment(1048576);
 int openBlock = 0, segNum = 0;
-vector<vector<int>> summary(KILO, vector<int>(2));
 vector<int> checkpoint(40);
 vector<int> imap(40 * KILO);
 vector<char> segments(64, 0);
+
+void test(){
+	ofstream test1("test.txt");
+	ofstream test2("tester.txt");
+
+	srand(time(0));
+
+	for(int i = 0; i < 1048576; i++){
+		test1 << rand();
+	}
+	for(int i = 0; i < 1048576; i++){
+		test2 << rand();
+	}
+
+}
 
 void hardDrive(){
 	mkdir("DRIVE", 0777);
@@ -123,9 +138,20 @@ void import(string file, string lfsFile){
 	fileNameMap.seekp(iNodeNum * 128);
 	fileNameMap.write(fileCArray, n);
 
-	vector<char> inputFileBuffer(fileSize);
-	fileIn.read(inputFileBuffer.data(), fileSize);
-	memcpy(&openBlockInSegment.at(openBlock * KILO), inputFileBuffer.data(), fileSize);
+	vector<char> inputFileBuffer(KILO);
+	//fileIn.read(inputFileBuffer.data(), KILO);
+	for(int i = 0; i <= fileSize / KILO; i++){
+		//fileIn.seekg(i * KILO);
+		fileIn.read(inputFileBuffer.data(), KILO);
+
+		//cout << inputFileBuffer.size() << endl;
+		// for(int x = 0; x < inputFileBuffer.size(); i++){
+		// 	cout << inputFileBuffer[x];
+		// }
+		memcpy(&openBlockInSegment.at(openBlock * KILO), inputFileBuffer.data(), KILO);
+		openBlock++;
+	}
+		//memcpy(&openBlockInSegment.at(openBlock * KILO), inputFileBuffer.data(), fileSize);
 
 	// for(int i = 0; i < inputFileBuffer.size(); i++){
 	// 	cout << inputFileBuffer[i];
@@ -135,13 +161,13 @@ void import(string file, string lfsFile){
 	// 	cout << openBlockInSegment[i];
 	// }
 
+	openBlock = 0;
+
 	iNode inode;
 	inode.fileName = lfsFile;
 	inode.size = fileSize;
 	for (int i = 0; i <= (fileSize / KILO); i++){
     inode.dataBlock[i] = openBlock + (segNum * KILO);
-    summary.at(openBlock).at(0) = iNodeNum;
-    summary.at(openBlock).at(1) = i;
     openBlock++;
 		//cout << i << endl;
   }
@@ -153,9 +179,6 @@ void import(string file, string lfsFile){
 	// 	cout << inode.dataBlock[i];
 	// }
 
-	summary.at(openBlock).at(0) = iNodeNum;
-	summary.at(openBlock).at(1) = -1;
-
 	memcpy(&openBlockInSegment.at(openBlock * KILO), &inode, sizeof(inode));
 	openBlock++;
 
@@ -164,7 +187,6 @@ void import(string file, string lfsFile){
 		bool flag = false;
 
 		seg.write(openBlockInSegment.data(), KILO * KILO);
-		seg.write(reinterpret_cast<const char *>(&summary), 8192);
 
 		for (int i = 0; i < 64; i++){
     	if (segments.at(i) == 0) {
@@ -196,9 +218,6 @@ void import(string file, string lfsFile){
   imap.at(iNodeNum) = (openBlock - 1) + (segNum * KILO);
 
   memcpy(&openBlockInSegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
-
-  summary.at(openBlock).at(0) = -1;
-  summary.at(openBlock).at(1) = frag;
 
 	segments.at(segNum) = 1;
 
@@ -271,7 +290,6 @@ void shutdown() {
 	bool flag = false;
 
   seg.write(openBlockInSegment.data(), 1024 * 1024);
-  seg.write(reinterpret_cast<const char*>(&summary), 8192);
 
 	for (int i = 0; i < 64; i++){
     if (segments.at(i) == 0) {
@@ -350,7 +368,6 @@ void removeFunction(string lfsFileName) {
 		int frag;
 
 		seg.write(openBlockInSegment.data(), KILO * KILO);
-		seg.write(reinterpret_cast<const char*>(&summary), 8192);
 
 		for (int i = 0; i < 64; ++i){
     if (segments.at(i) == 0) {
@@ -382,9 +399,6 @@ void removeFunction(string lfsFileName) {
 
   memcpy(&openBlockInSegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
 
-  summary.at(openBlock).at(0) = -1;
-  summary.at(openBlock).at(1) = frag;
-
   checkpoint[frag] = openBlock + segNum * KILO;
 
   openBlock++;
@@ -406,7 +420,6 @@ void restart(){
 	int num = 0;
 
 	seg.write(openBlockInSegment.data(), 1024 * 1024);
-  seg.write(reinterpret_cast<const char*>(&summary), 8192);
 
 	for (int i = 0; i < 64; i++){
     if (segments.at(i) == 0) {
@@ -446,7 +459,7 @@ void restart(){
   checkp.read(segments.data(), 64);
 
   for(int i = 0; i < 40; i++){
-    if(checkpoint.at(i) != -1 && checkpoint.at(i) >= num){
+    if(checkpoint.at(i) != 0 && checkpoint.at(i) >= num){
       num = checkpoint.at(i);
       flag = true;
     }
@@ -462,8 +475,6 @@ void restart(){
 	}
 
   seg.read(openBlockInSegment.data(), KILO * KILO);
-  seg.read(temp1.data(), 8192);
-  memcpy(summary.data(), temp1.data(), 8192);
 
 	for (int i = 0; i < 40; i++){
     if (checkpoint.at(i) != 0){
@@ -481,15 +492,16 @@ void restart(){
 }
 
 int main(){
-	ofstream beforeFile("before.txt", ios::binary);
-	ofstream afterFile("after.txt", ios::binary);
+
 
 	hardDrive();
 
-	import("other.txt", "hello.txt");
-	import("check.txt", "bye.txt");
+	//import("other.txt", "hello.txt");
+	//import("check.txt", "bye.txt");
+	import("test.txt", "firsttest.txt");
+	//import("tester.txt", "secondtest.txt");
 	// cout << "1" << endl;
-	list();
+	//list();
 	//cout << "removing bye.txt" << endl;
 	//removeFunction("bye.txt");
 
@@ -505,14 +517,14 @@ int main(){
 	// for (int i = 0; i < imap.size(); ++i){
   //       beforeFile << *before++ << " ";
 	// 		}
-	 cout << "restarting" << endl;
-	restart();
+	// cout << "restarting" << endl;
+	//restart();
 	// cout << "after restart" << endl;
 	// int * after = imap.data();
 	// for (int i = 0; i < imap.size(); ++i){
   //       afterFile << *after++ << " ";
 	// 		}
-	list();
+	//list();
 
 	// char buffer[4096];
 	// fstream inFile("DRIVE/SEGMENT0.txt", ios::binary | ios::in);
