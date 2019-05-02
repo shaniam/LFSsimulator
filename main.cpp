@@ -21,12 +21,12 @@ int inmem_index=0;
 int segindex=KILO;
 vector<int> ssbnodes={};
 
-char openBlockInSegment[KILO * KILO];
+vector<char> openBlockInSegment(KILO * KILO);
 int openBlock = 0;
 int segNum = 0;
-int summary[KILO][2];
-int checkpoint[40];
-int imap[40 * KILO];
+vector<vector<int>> summary(KILO, vector<int>(2));
+vector<int> checkpoint(40);
+vector<int> imap(40 * KILO);
 
 void hardDrive(){
 	mkdir("DRIVE", 0777);
@@ -79,7 +79,7 @@ void hardDrive(){
 }
 
 void import(string file, string lfsFile){
-	fstream fileIn(file);
+	fstream fileIn(file, ios::binary | ios::in);
   if (!fileIn.is_open()){
     cout << "File not found!" << endl;
     exit(-1);
@@ -91,9 +91,9 @@ void import(string file, string lfsFile){
   fileIn.seekg(0, ios::beg);
 
 	if ((fileSize / KILO) > KILO - openBlock){
-		fstream seg("DRIVE/SEGMENT"+std::to_string(segNum)+".txt", ios::binary);
+		fstream seg("DRIVE/SEGMENT"+to_string(segNum), ios::binary | ios::out);
 
-		seg.write(openBlockInSegment, KILO * KILO);
+		seg.write(openBlockInSegment.data(), KILO * KILO);
 		seg.write(reinterpret_cast<const char*>(&summary), 8192);
 
 		seg.close();
@@ -103,8 +103,8 @@ void import(string file, string lfsFile){
 
 	//cout << "File size: " << fileSize << endl;
 
-	fstream fileNameMap("DRIVE/FILENAMEMAP.txt");
-	char temp[128];
+	fstream fileNameMap("DRIVE/FILENAMEMAP.txt", ios::in);
+	vector<char> temp(128);
 	int iNodeNum = -1;
 	int frag = iNodeNum / (KILO / 4);
 
@@ -112,13 +112,13 @@ void import(string file, string lfsFile){
   for (int i = 0; i < 10000; i++){
     fileNameMap.seekg(i * 128);
 		//fill(begin(temp), end(temp), '0');
-    fileNameMap.read(temp, 128);
+    fileNameMap.read(temp.data(), 128);
 
 		//string str(temp);
 		//cout << "Str: " << temp << endl;
 
 		//Found an empty spot in the fileNameMap
-		if (temp[i*128] == '0'){
+		if (temp.at(i * 128) == '0'){
       iNodeNum = i;
 			//cout << i << endl;
 			break;
@@ -141,11 +141,11 @@ void import(string file, string lfsFile){
 
 	//Find proper spot in file (128byte blocks), write the name, and then fill remainder of block with garbage
 	fileNameMap.seekp(iNodeNum * 128);
-	fileNameMap.write(lfsCArray, (n + (128 - n)));
+	fileNameMap.write(lfsCArray, n);
 
-	char inputFileBuffer[fileSize];
-	fileIn.read(inputFileBuffer, fileSize);
-	memcpy(&openBlockInSegment[openBlock * KILO], inputFileBuffer, fileSize);
+	vector<char> inputFileBuffer(fileSize);
+	fileIn.read(inputFileBuffer.data(), fileSize);
+	memcpy(&openBlockInSegment.at(openBlock * KILO), inputFileBuffer.data(), fileSize);
 
 	// for(int i = 0; i < inputFileBuffer.size(); i++){
 	// 	cout << inputFileBuffer[i];
@@ -156,12 +156,12 @@ void import(string file, string lfsFile){
 	// }
 
 	iNode inode;
-	inode.fileName = lfsFile;
+	inode.fileName = file;
 	inode.size = fileSize;
 	for (int i = 0; i <= fileSize / KILO; i++){
-    inode.dataBlock[i] = openBlock + (segNum - 1) * KILO;
-    summary[openBlock][0] = iNodeNum;
-    summary[openBlock][1] = i;
+    inode.dataBlock.at(i) = openBlock + (segNum - 1) * KILO;
+    summary.at(openBlock).at(0) = iNodeNum;
+    summary.at(openBlock).at(1) = i;
     openBlock++;
 		//cout << i << endl;
   }
@@ -173,34 +173,34 @@ void import(string file, string lfsFile){
 	// 	cout << inode.dataBlock[i];
 	// }
 
-	summary[openBlock][0] = iNodeNum;
-	summary[openBlock][1] = -1;
+	summary.at(openBlock).at(0) = iNodeNum;
+	summary.at(openBlock).at(1) = -1;
 
-	memcpy(&openBlockInSegment[openBlock * KILO], &inode, sizeof(inode));
+	memcpy(&openBlockInSegment.at(openBlock * KILO), &inode, sizeof(inode));
 	openBlock++;
 
 	if (openBlock == KILO){
-		fstream seg("DRIVE/SEGMENT"+to_string(segNum)+".txt", ios::binary);
+		fstream seg("DRIVE/SEGMENT"+to_string(segNum)+".txt", ios::binary | ios::out);
 
-		seg.write(openBlockInSegment, KILO * KILO);
+		seg.write(openBlockInSegment.data(), KILO * KILO);
 		seg.write(reinterpret_cast<const char*>(&summary), 8192);
 
 		seg.close();
 		cout << "run" << endl;
 	}
 
-  imap[iNodeNum] = (openBlock - 1) + (segNum * KILO);
+  imap.at(iNodeNum) = (openBlock - 1) + (segNum * KILO);
 
-  memcpy(&openBlockInSegment[openBlock * KILO], &imap[frag * (KILO / 4)], KILO);
+  memcpy(&openBlockInSegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
 
-  summary[openBlock][0] = -1;
-  summary[openBlock][1] = frag;
+  summary.at(openBlock).at(0) = -1;
+  summary.at(openBlock).at(1) = frag;
 
-  checkpoint[frag] = openBlock + segNum * KILO;
+  checkpoint.at(frag) = openBlock + segNum * KILO;
 
   openBlock++;
 
-	// fstream in("DRIVE/SEGMENT0.txt", fstream::binary);
+	// fstream in("DRIVE/SEGMENT0.txt", ios::binary);
 	//
 	// char buffer[fileSize];
 	// in.read(buffer, fileSize);
@@ -212,21 +212,118 @@ void import(string file, string lfsFile){
 	fileIn.close();
 }
 
-void shutdown() {
-	fstream seg("DRIVE/SEGMENT"+std::to_string(segNum)+".txt", fstream::binary );
+void remove(string lfsFileName){
+	int iNodeNum = -1;
+	vector<char> temp(128);
 
-  seg.write(openBlockInSegment, 1024 * 1024);
+	fstream fileNameMap("DRIVE/FILENAMEMAP.txt", ios::binary | ios::in | ios::out);
+
+ 	for (int i = 0; i < 10000; ++i){
+	 	fileNameMap.seekg(i * 128);
+	 	fileNameMap.read(temp.data(), 128);
+
+	 	if (temp.at(i * 128) == '0') {
+		 	vector<char> vectFile(128);
+		 	fileNameMap.read(vectFile.data(), 128);
+
+		 	string strFileName(vectFile.begin(), vectFile.end());
+		 	if (strFileName == lfsFileName){
+			 	iNodeNum = i;
+				break;
+		 	}
+	 	}
+ 	}
+
+ 	fileNameMap.close();
+
+ 	if(iNodeNum == -1){
+	 	cerr << "File Name Not Found!" << endl;
+	 	exit(-1);
+ 	}
+
+	if (openBlock == KILO){
+		fstream seg("DRIVE/SEGMENT"+to_string(segNum)+".txt", ios::binary | ios::out);
+
+		seg.write(openBlockInSegment.data(), KILO * KILO);
+		seg.write(reinterpret_cast<const char*>(&summary), 8192);
+
+		seg.close();
+
+		openBlock = 0;
+	}
+
+  imap[iNodeNum] = -1;
+
+ 	int frag = iNodeNum / (KILO / 4);
+
+  memcpy(&openBlockInSegment.at(openBlock * KILO), &imap[frag * (KILO / 4)], KILO);
+
+  summary.at(openBlock).at(0) = -1;
+  summary.at(openBlock).at(1) = frag;
+
+  checkpoint[frag] = openBlock + (segNum - 1) * KILO;
+
+  openBlock++;
+
+}
+
+void list(){
+	fstream fileNameMap("DRIVE/FILENAMEMAP.txt", ios::in);
+	vector<char> temp(128);
+
+  for (int i = 0; i < 10000; ++i){
+    fileNameMap.seekg(i * 128);
+    fileNameMap.read(temp.data(), 128);
+
+    if (temp.at(i * 128) > 0){
+			cout << "I: " << i << endl;
+      vector<char> vectFile(128);
+      fileNameMap.read(vectFile.data(), 128);
+			string strFile(vectFile.begin(), vectFile.end());
+
+			int block = imap[i];
+  		int segment = block/KILO;
+  		int local = (block % KILO) * KILO;
+
+  		iNode inode;
+
+			//cout << "SegNum: " << segNum << " segment: " << segment << endl;
+
+  		if(segNum == segment){
+    		memcpy(&inode, &openBlockInSegment.at(local), sizeof(inode));
+
+				cout << "File Name: " << inode.fileName << " File Size: " << inode.size << endl;
+  		}
+			// else{
+    	// 	fstream disk("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary | ios::in);
+			//
+    	// 	disk.seekg(local);
+    	// 	vector<char> temp(sizeof(inode));
+    	// 	disk.read(temp.data(), sizeof(inode));
+    	// 	memcpy(&inode, temp.data(), sizeof(inode));
+			//
+    	// 	disk.close();
+    }
+  }
+
+  //fileNameMap.close();
+}
+
+void shutdown() {
+	fstream seg("DRIVE/SEGMENT"+to_string(segNum)+".txt", ios::binary | ios::out);
+
+  seg.write(openBlockInSegment.data(), 1024 * 1024);
   seg.write(reinterpret_cast<const char*>(&summary), 8192);
 
   seg.close();
 
   openBlock = 0;
 
-	std::fstream check("DRIVE/CHECKPOINT_REGION.txt", fstream::binary);
+	fstream check("DRIVE/CHECKPOINT_REGION.txt", ios::binary | ios::out);
 
-  char checkBuf[160];
-  memcpy(checkBuf, checkpoint, 160);
-  check.write(checkBuf, 160);
+  vector<char> checkBuf(160);
+  memcpy(checkBuf.data(), checkpoint.data(), 160);
+  check.write(checkBuf.data(), 160);
 
   check.close();
 }
@@ -234,14 +331,16 @@ int main(){
 	hardDrive();
 
 	import("other.txt", "DRIVE/SEGMENT0.txt");
+	//import("check.txt", "DRIVE/SEGMENT1.txt");
+	list();
 	shutdown();
 
-	char buffer[10];
-	ifstream inFile("DRIVE/SEGMENT0.txt", ios::binary);
-	inFile.read(buffer, 1);
-
-	for(int i = 0; i < 10; i++){
-		cout << buffer[i] << endl;
-	}
+	// char buffer[1024];
+	// ofstream inFile("DRIVE/SEGMENT0.txt", ios::binary);
+	// inFile.read(buffer, 1024);
+	//
+	// for(int i = 0; i < 1024; i++){
+	// 	cout << buffer[i];
+	// }
 
 }
