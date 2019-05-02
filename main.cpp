@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <cstdio>
 #include <iostream>
 #include <string>
 #include <array>
@@ -7,6 +8,7 @@
 #include <cstring>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <cstring>
 #include "inode.h"
 #define KILO 1024
 
@@ -222,14 +224,24 @@ void list(){
 			char fileName[128];
       fileNameMap.read(fileName, 128);
 			string str(fileName);
-			//
-		 	printf("File Name: %s File Size: %d\n", fileName, getFileSize(i));
+
+			// cout << "Block: " << block << endl;
+			// cout << "segment: " << block << endl;
+			// cout << "Block: " << block << endl;
+
+			int block = imap[i];
+			int segment = block / KILO;
+			int local = (block % KILO) * KILO;
+
+			iNode inode;
+
+		  if(segNum == segment){
+				memcpy(&inode, &openBlockInSegment.at(local), sizeof(inode));
+
+				cout << "File Name: " << fileName << " File Size: " << inode.size << endl;
+		  }
 		}
 	}
-			//cout << "Block: " << block << endl;
-			//cout << "segment: " << block << endl;
-			//cout << "Block: " << block << endl;
-
 			//cout << "SegNum: " << segNum << " segment: " << segment << endl;
 			//cout << "open: " << openBlockInSegment.at(local) << endl;
 
@@ -253,7 +265,7 @@ void shutdown() {
   check.write(checkBuf.data(), 160);
 
   check.close();
-	exit(0);
+	//exit(0);
 }
 
 int getFileSize(int i){
@@ -282,20 +294,23 @@ int getFileSize(int i){
 
 void removeFunction(string lfsFileName) {
 	int iNodeNum = -1;
-	vector<char> temp(1);
+	char temp[1];
 	fstream fileNameMap("DRIVE/FILENAMEMAP.txt", ios::in | ios::out);
 
  	for (int i = 0; i < 10000; i++){
 	 	fileNameMap.seekg(i * 128);
-	 	fileNameMap.read(temp.data(), 1);
+	 	fileNameMap.read(temp, 1);
 
 		//cout << "temp: " << temp.at(0) << endl;
-	 	if (temp.at(0)) {
-		 	vector<char> vectFile(128);
-		 	fileNameMap.read(vectFile.data(), 128);
-		 	string strFileName(vectFile.begin(), vectFile.end());
+	 	if (temp[0] != '0') {
+			fileNameMap.seekg(i * 128);
+		 	char vectFile[128];
+		 	fileNameMap.read(vectFile, 128);
+		 	string strFileName(vectFile);
 
-		 	if (strFileName == lfsFileName){
+			//cout << "str: " << strFileName << " lfs: " << lfsFileName << endl;
+
+		 	if (strcmp(lfsFileName.c_str(), strFileName.c_str()) == 0){
 			 	iNodeNum = i;
 				break;
 		 	}
@@ -304,7 +319,7 @@ void removeFunction(string lfsFileName) {
 
  	if(iNodeNum == -1){
 	 	cerr << "File Name Not Found!" << endl;
-	 	exit(-1);
+	 	//exit(-1);
  	}
 
 	char zero[128] = {0};
@@ -325,34 +340,41 @@ void removeFunction(string lfsFileName) {
 		openBlock = 0;
 	}
 
-  imap[iNodeNum] = -1;
+	cout << "inodenum: " << iNodeNum << endl;
+	cout << "test: " << imap.at(iNodeNum) << endl;
 
- 	int frag = iNodeNum / (KILO / 4);
+  imap.at(iNodeNum) = -1;
 
-  memcpy(&openBlockInSegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
-
-  summary.at(openBlock).at(0) = -1;
-  summary.at(openBlock).at(1) = frag;
-
-  checkpoint[frag] = openBlock + (segNum - 1) * KILO;
-
-  openBlock++;
+ 	// int frag = iNodeNum / (KILO / 4);
+	//
+  // memcpy(&openBlockInSegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
+	//
+  // summary.at(openBlock).at(0) = -1;
+  // summary.at(openBlock).at(1) = frag;
+	//
+  // checkpoint[frag] = openBlock + (segNum - 1) * KILO;
+	//
+  // openBlock++;
 }
 int main(){
 	hardDrive();
 
 	import("other.txt", "hello.txt");
 	import("check.txt", "bye.txt");
-	remove("DRIVE/SEGMENT0.txt");
+	//cout << "1" << endl;
+	//list();
+	//cout << "1.5" << endl;
+	removeFunction("bye.txt");
 
+	//cout << "2" << endl;
 	list();
 	//shutdown();
 
-	// char buffer[1024];
-	// ofstream inFile("DRIVE/SEGMENT0.txt", ios::binary);
-	// inFile.read(buffer, 1024);
+	// char buffer[512];
+	// fstream inFile("DRIVE/SEGMENT0.txt", ios::binary | ios::in);
+	// inFile.read(buffer, 512);
 	//
-	// for(int i = 0; i < 1024; i++){
+	// for(int i = 0; i < 512; i++){
 	// 	cout << buffer[i];
 	// }
 
