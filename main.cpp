@@ -405,13 +405,41 @@ void restart(){
 	int segment, block;
 	int num = 0;
 
+	seg.write(openBlockInSegment.data(), 1024 * 1024);
+  seg.write(reinterpret_cast<const char*>(&summary), 8192);
+
+	for (int i = 0; i < 64; i++){
+    if (segments.at(i) == 0) {
+      segNum = i + 1;
+			flag = true;
+      break;
+    }
+  }
+
+	if(flag == false){
+		cerr << "No more clean blocks!" << endl;
+
+		vector<char> tem(160);
+		memcpy(tem.data(), checkpoint.data(), 160);
+		checkp.write(tem.data(), 160);
+		checkp.write(segments.data(), 64);
+
+		checkp.close();
+	  seg.close();
+		exit(-1);
+	}
+
   checkp.read(temp.data(), 160);
 
-	cout << "before restart" << endl;
-	char * before = temp.data();
-	for (int i = 0; i < temp.size(); ++i){
-        beforeFile << *before++ << " ";
-			}
+	//cout << temp.size() << endl;
+	// for(int i = 0; i < temp.size(); i++){
+	// 	cout << temp[i];
+	// }
+
+	// cout << "before restart" << endl;
+	// char * before = temp.data();
+  // beforeFile.write(temp.data(), 160);
+
 
   memcpy(checkpoint.data(), temp.data(), 160);
 
@@ -438,7 +466,7 @@ void restart(){
   memcpy(summary.data(), temp1.data(), 8192);
 
 	for (int i = 0; i < 40; i++){
-    if (checkpoint.at(i) != -1){
+    if (checkpoint.at(i) != 0){
 			segment = (checkpoint.at(i) / KILO) + 1;
 			block = (checkpoint.at(i) % KILO) * KILO;
 
@@ -461,9 +489,9 @@ int main(){
 	import("other.txt", "hello.txt");
 	import("check.txt", "bye.txt");
 	// cout << "1" << endl;
-	// list();
-	// cout << "removing bye.txt" << endl;
-	// removeFunction("bye.txt");
+	list();
+	//cout << "removing bye.txt" << endl;
+	//removeFunction("bye.txt");
 
 	//cout << "2" << endl;
 	//list();
@@ -477,14 +505,14 @@ int main(){
 	// for (int i = 0; i < imap.size(); ++i){
   //       beforeFile << *before++ << " ";
 	// 		}
-	// cout << "restarting" << endl;
-	// restart();
+	 cout << "restarting" << endl;
+	restart();
 	// cout << "after restart" << endl;
 	// int * after = imap.data();
 	// for (int i = 0; i < imap.size(); ++i){
   //       afterFile << *after++ << " ";
 	// 		}
-	//list();
+	list();
 
 	// char buffer[4096];
 	// fstream inFile("DRIVE/SEGMENT0.txt", ios::binary | ios::in);
