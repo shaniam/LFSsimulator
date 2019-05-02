@@ -8,7 +8,9 @@ class iNode{
   public:
     std::string fileName;
     int size;
-    std::vector<int> dataBlock{128};
+    int dataBlock[128];
 };
+
+
 
 #endif
