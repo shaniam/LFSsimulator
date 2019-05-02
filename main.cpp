@@ -397,6 +397,7 @@ void removeFunction(string lfsFileName) {
 void restart(){
 	fstream checkp("DRIVE/CHECKPOINT_REGION.txt", ios::binary | ios::out | ios::in);
 	fstream seg("DRIVE/SEGMENT" + to_string(segNum) + ".txt", ios::binary | ios::in | ios::out);
+	ofstream beforeFile("before.txt", ios::binary);
 	bool flag = false;
   vector<char> temp(160);
 	vector<char> temp1(8192);
@@ -405,6 +406,13 @@ void restart(){
 	int num = 0;
 
   checkp.read(temp.data(), 160);
+
+	cout << "before restart" << endl;
+	char * before = temp.data();
+	for (int i = 0; i < temp.size(); ++i){
+        beforeFile << *before++ << " ";
+			}
+
   memcpy(checkpoint.data(), temp.data(), 160);
 
   checkp.read(segments.data(), 64);
@@ -452,10 +460,10 @@ int main(){
 
 	import("other.txt", "hello.txt");
 	import("check.txt", "bye.txt");
-	cout << "1" << endl;
-	list();
-	cout << "removing bye.txt" << endl;
-	removeFunction("bye.txt");
+	// cout << "1" << endl;
+	// list();
+	// cout << "removing bye.txt" << endl;
+	// removeFunction("bye.txt");
 
 	//cout << "2" << endl;
 	//list();
@@ -464,18 +472,18 @@ int main(){
 	//cout << "shutting down" << endl;
 	//shutdown();
 	//list();
-	cout << "before restart" << endl;
-	int * before = imap.data();
-	for (int i = 0; i < imap.size(); ++i){
-        beforeFile << *before++ << " ";
-			}
-	cout << "restarting" << endl;
-	restart();
-	cout << "after restart" << endl;
-	int * after = imap.data();
-	for (int i = 0; i < imap.size(); ++i){
-        afterFile << *after++ << " ";
-			}
+	// cout << "before restart" << endl;
+	// int * before = imap.data();
+	// for (int i = 0; i < imap.size(); ++i){
+  //       beforeFile << *before++ << " ";
+	// 		}
+	// cout << "restarting" << endl;
+	// restart();
+	// cout << "after restart" << endl;
+	// int * after = imap.data();
+	// for (int i = 0; i < imap.size(); ++i){
+  //       afterFile << *after++ << " ";
+	// 		}
 	//list();
 
 	// char buffer[4096];
