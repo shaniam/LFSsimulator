@@ -29,22 +29,20 @@ vector<int> checkpoint(40);
 vector<int> imap(40 * KILO);
 
 void hardDrive(){
-	struct stat st = {0};
+  mkdir("DRIVE", 0777);
 
-  if (stat("./DRIVE", &st) == -1)
-    mkdir("./DRIVE", 0700);
-
+  int y = 0;
 	string name = "DRIVE/SEGMENT";
 	string checkpoint = "DRIVE/CHECKPOINT_REGION";
 	string fileNameMap = "DRIVE/FILENAMEMAP";
 	ofstream outfile2(checkpoint+".txt", ios::binary);
 	ofstream outfile3(fileNameMap+".txt");
 
-	for (int i = 0; i < 1; i++){
+	for (int i = 0; i < 64; i++){
 		string iter=to_string(i);
 		string file=name+iter+".txt";
 		ofstream outfile(file, ios::binary);
-		char y = 0;
+		
 
 		if(!outfile.is_open()){
 			cerr << "Problem with segment " << i << endl;
@@ -52,8 +50,8 @@ void hardDrive(){
 		}
 
 		//1048576 / 4
-		for (int x = 0; x < 10; x++){
-			outfile.write(&y, sizeof(char));
+		for (int x = 0; x < 1048576; x++){
+		  outfile.write(reinterpret_cast<const char*>(&y), sizeof(char));
 		}
 
 		outfile.close();
@@ -64,9 +62,8 @@ void hardDrive(){
 		exit(-1);
 	}
 
-	int w = 0;
-	for (int x = 0; x < 1048576 / 4; x++){
-		outfile2.write(reinterpret_cast<const char*>(&w), sizeof(w));
+	for (int x = 0; x < 1048576; x++){
+		outfile2.write(reinterpret_cast<const char*>(&y), sizeof(y));
 	}
 
 	if(!outfile3.is_open()){
