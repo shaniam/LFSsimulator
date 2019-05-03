@@ -207,7 +207,7 @@ void import(string file, string lfsFile){
 	inode.size = fileSize;
 	//cout << fileSize / KILO << endl;
 	for (int i = 0; i <= (fileSize / KILO); i++){
-	  inode.dataBlock[i] = openBlock + (segNum * KILO);
+	  inode.dataBlock[i] = openBlock + (segNum - 1) * KILO;
 	  openBlock++;
 	  check();
   }
@@ -227,7 +227,7 @@ void import(string file, string lfsFile){
 
 	int frag = iNodeNum / (KILO / 4);
 
-  imap.at(iNodeNum) = (openBlock - 1) + (segNum * KILO);
+  imap.at(iNodeNum) = (openBlock - 1) + (segNum - 1) * KILO);
 
   memcpy(&openBlockInSegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
 	openBlock++;
@@ -254,7 +254,7 @@ void import(string file, string lfsFile){
 void list(){
 	ifstream fileNameMap("DRIVE/FILENAMEMAP.txt");
 	iNode var;
-	
+
   for (int i = 0; i < 10000; i++){
     //cout << "I: " << i << endl;
     fileNameMap.seekg(i * 128);
@@ -275,7 +275,7 @@ void list(){
 			// cout << "Block: " << block << endl;
 			// cout << "segment: " << block << endl;
 			// cout << "Block: " << block << endl;
-			
+
 		  if(segNum == segment){
 		    memcpy(&var, openBlockInSegment.data(), sizeof(var));
 		  }
@@ -292,10 +292,10 @@ void list(){
 			}
 			cout << "File Name: " << str << " File Size: " << var.size << endl;
 		 }
-    
+
 		}
   //
-  
+
   //cout << "SegNum: " << segNum << " segment: " << segment << endl;
 			//cout << "open: " << openBlockInSegment.at(local) << endl;
   fileNameMap.close();
