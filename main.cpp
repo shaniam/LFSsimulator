@@ -276,26 +276,22 @@ void list(){
 
 		  if(segNum == segment){
 				memcpy(&inode1, &openBlockInSegment[local], sizeof(iNode));
-
-				cout << "File Name: " << str << " File Size: " << inode1.size << endl;
 		  }
 			else{
-		  //   ifstream disk("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary);
-			//
-		  //   disk.seekg(local);
-		  //   char buffer[sizeof(iNode)];
-		  //   disk.read(buffer, sizeof(iNode));
-		  //   memcpy(&inode1, buffer, sizeof(iNode));
-			//
-		  //   disk.close();
-			// }
+		    ifstream disk("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary);
 
-		  }
+		    disk.seekg(local);
+		    char buffer[sizeof(iNode)];
+		    disk.read(buffer, sizeof(iNode));
+		    memcpy(&inode1, buffer, sizeof(iNode));
+
+		    disk.close();
+			}
+			cout << "File Name: " << str << " File Size: " << inode1.size << endl;
+		 }
 		}
-
 			//cout << "SegNum: " << segNum << " segment: " << segment << endl;
 			//cout << "open: " << openBlockInSegment.at(local) << endl;
-
   fileNameMap.close();
 }
 
