@@ -509,72 +509,72 @@ void restart(){
 
 int main(){
 
-	srand(time(NULL));
-
-	//test();
-
-	hardDrive();
-	restart();
-	string mystr;
-	cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', , to exit enter 'exit' " << endl;
-
-	while (getline(cin, mystr)){
-	//cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', 'restart' to exit enter 'exit' " << endl;
-	//cerr << mystr << endl;
-	if (mystr.compare("exit")==0){
-	exit(-1);
-	}
-	else if(mystr.compare("list")==0){
-
-	list();
-	}
-	else if(mystr.compare("shutdown")==0){
-	shutdown();
-	}
-	/*else if (mystr.compare("restart")==0){
-	restart();
-	}*/
-	else{
-
-	string word;
-	string filen1;
-	string filen2;
-	vector<string> vecs={};
-	for (auto x: mystr){
-	if (x == ' '){
-	vecs.push_back(word);
-	word="";}
-	else{
-	word=word+x;
-	}
-	}
+	// srand(time(NULL));
+	//
+	// //test();
+	//
+	// hardDrive();
+	// restart();
+	// string mystr;
+	// cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', , to exit enter 'exit' " << endl;
+	//
+	// while (getline(cin, mystr)){
+	// //cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', 'restart' to exit enter 'exit' " << endl;
+	// //cerr << mystr << endl;
+	// if (mystr.compare("exit")==0){
+	// exit(-1);
+	// }
+	// else if(mystr.compare("list")==0){
+	//
+	// list();
+	// }
+	// else if(mystr.compare("shutdown")==0){
+	// shutdown();
+	// }
+	// /*else if (mystr.compare("restart")==0){
+	// restart();
+	// }*/
+	// else{
+	//
+	// string word;
+	// string filen1;
+	// string filen2;
+	// vector<string> vecs={};
+	// for (auto x: mystr){
+	// if (x == ' '){
+	// vecs.push_back(word);
+	// word="";}
+	// else{
+	// word=word+x;
+	// }
+	// }
 	/*for (auto x: vecs){
 	cerr << x << endl;
 	}*/
-	vecs.push_back(word);
-	//cerr << vecs[0] << endl;
-	//cerr << vecs.size() << endl;
-	if (vecs[0].compare("import")==0 && vecs.size()==3){
-	cerr << "import" << endl;
-	import(vecs[1], vecs[2]);
-	}
-	else if(vecs[0].compare("remove")==0 && vecs.size()==2){
-	cerr << "remove" << endl;
-	removeFunction(vecs[1]);
-	}
-	else{
-	cerr << "invalid command" << endl;
-	continue;
-	}
-	}
-	cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown',  to exit enter 'exit' " << endl;
-
-	}
+	// vecs.push_back(word);
+	// //cerr << vecs[0] << endl;
+	// //cerr << vecs.size() << endl;
+	// if (vecs[0].compare("import")==0 && vecs.size()==3){
+	// cerr << "import" << endl;
+	// import(vecs[1], vecs[2]);
+	// }
+	// else if(vecs[0].compare("remove")==0 && vecs.size()==2){
+	// cerr << "remove" << endl;
+	// removeFunction(vecs[1]);
+	// }
+	// else{
+	// cerr << "invalid command" << endl;
+	// continue;
+	// }
+	// }
+	// cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown',  to exit enter 'exit' " << endl;
+	//
+	// }
 
 // //test();
 //
-// 	// import("test0.txt", "num0test.txt");
-// 	// list();
+	import("test0.txt", "num0test.txt");
+	list();
 //
 // 	srand(time(NULL));
 //
