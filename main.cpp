@@ -16,7 +16,7 @@
 using namespace std;
 
 vector<char> openBlockInSegment(1048576);
-int openBlock = 0, segNum = 0;
+int openBlock = 0, segNum = 1
 vector<int> checkpoint(40);
 vector<int> imap(40 * KILO);
 vector<char> segments(64, 0);
@@ -105,8 +105,9 @@ void hardDrive(){
 		exit(-1);
 	}
 
-	for (int x = 0; x < 1048576 / 4; x++){
-		outfile2.write(reinterpret_cast<const char*>(&y), sizeof(y));
+	char buffer[1] = {0};
+	for (int x = 0; x < 1048576; x++){
+		outfile2.write(buffer, 1);
 	}
 
 	if(!outfile3.is_open()){
@@ -206,9 +207,9 @@ void import(string file, string lfsFile){
 	inode.size = fileSize;
 	//cout << fileSize / KILO << endl;
 	for (int i = 0; i <= (fileSize / KILO); i++){
-    inode.dataBlock[i] = openBlock + (segNum * KILO);
-    openBlock++;
-		check();
+	  inode.dataBlock[i] = openBlock + (segNum * KILO);
+	  openBlock++;
+	  check();
   }
 	//cout << "finished" << endl;
 	// cout << inode.fileName << " " << inode.size << " " << inode.dataBlock.data() << endl;
@@ -252,45 +253,50 @@ void import(string file, string lfsFile){
 
 void list(){
 	ifstream fileNameMap("DRIVE/FILENAMEMAP.txt");
-	iNode inode1;
-
-
+	iNode var;
+	
   for (int i = 0; i < 10000; i++){
+    //cout << "I: " << i << endl;
     fileNameMap.seekg(i * 128);
 		char temp[1];
     fileNameMap.read(temp, 1);
-		//cout << "I:" << i << endl;
+    //cout << "Temp" << temp[0] << endl;
+    //cout << "I:" << i << endl;
 		//cout << "valid: " << valid[0] << endl;
     if (temp[0] != '0'){
-			fileNameMap.seekg(i * 128);
-			char fileName[128];
+      fileNameMap.seekg(i * 128);
+      char fileName[128];
       fileNameMap.read(fileName, 128);
 			string str(fileName);
 
 			int block = imap[i];
-			int segment = block / KILO;
+			int segment = (block / KILO) + 1;
 			int local = (block % KILO) * KILO;
 			// cout << "Block: " << block << endl;
 			// cout << "segment: " << block << endl;
 			// cout << "Block: " << block << endl;
-
+			
 		  if(segNum == segment){
-				memcpy(&inode1, &openBlockInSegment[local], sizeof(iNode));
+		    memcpy(&var, openBlockInSegment.data(), sizeof(var));
 		  }
 			else{
 		    ifstream disk("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary);
 
 		    disk.seekg(local);
-		    char buffer[sizeof(iNode)];
-		    disk.read(buffer, sizeof(iNode));
-		    memcpy(&inode1, buffer, sizeof(iNode));
+		    char buffer[sizeof(var)];
+		    disk.read(buffer, sizeof(var));
+		    memcpy(&var, buffer, sizeof(var));
 
 		    disk.close();
+		    //cout << "finished" << endl;
 			}
-			cout << "File Name: " << str << " File Size: " << inode1.size << endl;
+			cout << "File Name: " << str << " File Size: " << var.size << endl;
 		 }
+    
 		}
-			//cout << "SegNum: " << segNum << " segment: " << segment << endl;
+  //
+  
+  //cout << "SegNum: " << segNum << " segment: " << segment << endl;
 			//cout << "open: " << openBlockInSegment.at(local) << endl;
   fileNameMap.close();
 }
@@ -511,7 +517,7 @@ int main(){
 	//
 	// //test();
 	//
-	// hardDrive();
+        hardDrive();
 	// restart();
 	// string mystr;
 	// cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', , to exit enter 'exit' " << endl;
