@@ -425,12 +425,11 @@ void removeFunction(string lfsFileName) {
 
 void restart(){
 	fstream checkp("DRIVE/CHECKPOINT_REGION.txt", ios::binary | ios::out | ios::in);
-	fstream seg("DRIVE/SEGMENT" + to_string(segNum) + ".txt", ios::binary | ios::in | ios::out);
-	bool flag = false;
   vector<char> temp(160);
 	vector<char> temp1(8192);
 	vector<char> temp2(KILO);
 	int segment, block;
+	bool flag = false;
 	int num = 0;
 
 	// seg.write(openBlockInSegment.data(), 1024 * 1024);
@@ -456,98 +455,171 @@ void restart(){
 	// 	exit(-1);
 	// }
 
-  checkp.read(temp.data(), 160);
+	char buffer[160];
+  checkp.read(buffer, 160);
 
-  memcpy(checkpoint.data(), temp.data(), 160);
+  memcpy(checkpoint.data(), buffer, 160);
 
   checkp.read(segments.data(), 64);
 
+	checkp.close();
+
   for(int i = 0; i < 40; i++){
-    if(checkpoint.at(i) != 0 && checkpoint.at(i) >= num){
+    if(checkpoint.at(i) >= 0 && checkpoint.at(i) > num){
       num = checkpoint.at(i);
       flag = true;
     }
   }
 
-	segNum = (num / KILO);
-
-	if(flag == true){
+	if(flag){
 		openBlock = (num % KILO) + 1;
 	}
 	else{
 		openBlock = 0;
 	}
 
+	segNum = num / KILO;
+
+	fstream seg("DRIVE/SEGMENT" + to_string(segNum) + ".txt", ios::binary | ios::in);
+
   seg.read(openBlockInSegment.data(), KILO * KILO);
+
+	seg.close();
 
 	for (int i = 0; i < 40; i++){
     if (checkpoint.at(i) != 0){
-			segment = (checkpoint.at(i) / KILO) + 1;
+			segment = (checkpoint.at(i) / KILO);
 			block = (checkpoint.at(i) % KILO) * KILO;
+			fstream segg("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary | ios::in | ios::out);
 
-			seg.seekg(block);
-			seg.read(temp2.data(), KILO);
+			segg.seekg(block);
+			segg.read(temp2.data(), KILO);
+			//memcpy(&imap.at(i * (KILO / 4)), temp2.data(), KILO);
+			for (int i = 0; i < imap.size(); i++){
+
+			}
 			memcpy(&imap.at(i * (KILO / 4)), temp2.data(), KILO);
+
+			seg.close();
 		}
   }
 
-  seg.close();
 	checkp.close();
 }
 
 int main(){
 
-//test();
+	srand(time(NULL));
+
+	//test();
 
 	hardDrive();
+	restart();
+	string mystr;
+	cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', , to exit enter 'exit' " << endl;
 
-	import("test0.txt", "num0test.txt");
+	while (getline(cin, mystr)){
+	//cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', 'restart' to exit enter 'exit' " << endl;
+	//cerr << mystr << endl;
+	if (mystr.compare("exit")==0){
+	exit(-1);
+	}
+	else if(mystr.compare("list")==0){
+
 	list();
+	}
+	else if(mystr.compare("shutdown")==0){
+	shutdown();
+	}
+	/*else if (mystr.compare("restart")==0){
+	restart();
+	}*/
+	else{
 
-	// srand(time(NULL));
-	//
-	// //test();
-	//
-	// hardDrive();
-	//
-	// import("other.txt", "hello.txt");
-	// import("check.txt", "bye.txt");
-	// for(int i = 0; i < 20; i++){
-	// 	import("test" + to_string(i) + ".txt", "num" + to_string(i) + "test.txt");
-	// }
-	// cout << "list with everything" << endl;
-	// list();
-	// cout << "removing bye.txt" << endl;
-	// removeFunction("bye.txt");
-	//
-	// // cout << "removing 20 random files" << endl;
-	// // for(int i = 0; i < 20; i++){
-	// // 	srand(i);
-	// // 	int y = rand() % 40;
-	// // 	cout << "removing num" << y << "test.txt" << endl;
-	// // 	removeFunction("num" + to_string(y) + "test.txt");
-	// // }
-	//
-	// cout << "list after 20 removal" << endl;
-	// list();
-	//
-	// cout << "shutting down" << endl;
-	// shutdown();
-	// list();
-	// cout << "before restart" << endl;
-	// int * before = imap.data();
-	// for (int i = 0; i < imap.size(); ++i){
-  //       beforeFile << *before++ << " ";
-	// 		}
-	// cout << "restarting" << endl;
-	// restart();
-	// cout << "after restart" << endl;
-	// // int * after = imap.data();
-	// // for (int i = 0; i < imap.size(); ++i){
-  // //       afterFile << *after++ << " ";
-	// // 		}
-	// list();
-	//
+	string word;
+	string filen1;
+	string filen2;
+	vector<string> vecs={};
+	for (auto x: mystr){
+	if (x == ' '){
+	vecs.push_back(word);
+	word="";}
+	else{
+	word=word+x;
+	}
+	}
+	/*for (auto x: vecs){
+	cerr << x << endl;
+	}*/
+	vecs.push_back(word);
+	//cerr << vecs[0] << endl;
+	//cerr << vecs.size() << endl;
+	if (vecs[0].compare("import")==0 && vecs.size()==3){
+	cerr << "import" << endl;
+	import(vecs[1], vecs[2]);
+	}
+	else if(vecs[0].compare("remove")==0 && vecs.size()==2){
+	cerr << "remove" << endl;
+	removeFunction(vecs[1]);
+	}
+	else{
+	cerr << "invalid command" << endl;
+	continue;
+	}
+	}
+	cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown',  to exit enter 'exit' " << endl;
+
+	}
+
+// //test();
+//
+// 	// import("test0.txt", "num0test.txt");
+// 	// list();
+//
+// 	srand(time(NULL));
+//
+// 	//test();
+//
+// 	hardDrive();
+//
+// 	import("other.txt", "hello.txt");
+// 	import("check.txt", "bye.txt");
+// 	for(int i = 0; i < 20; i++){
+// 		import("test" + to_string(i) + ".txt", "num" + to_string(i) + "test.txt");
+// 	}
+// 	cout << "list with everything" << endl;
+// 	list();
+// 	cout << "removing bye.txt" << endl;
+// 	removeFunction("bye.txt");
+//
+// 	// cout << "removing 20 random files" << endl;
+// 	// for(int i = 0; i < 20; i++){
+// 	// 	srand(i);
+// 	// 	int y = rand() % 40;
+// 	// 	cout << "removing num" << y << "test.txt" << endl;
+// 	// 	removeFunction("num" + to_string(y) + "test.txt");
+// 	// }
+//
+// 	cout << "list after 20 removal" << endl;
+// 	list();
+//
+// 	cout << "shutting down" << endl;
+// 	shutdown();
+// 	//list();
+// 	// cout << "before restart" << endl;
+// 	// int * before = imap.data();
+// 	// for (int i = 0; i < imap.size(); ++i){
+//   //       beforeFile << *before++ << " ";
+// 	// 		}
+// 	cout << "restarting" << endl;
+// 	restart();
+// 	cout << "after restart" << endl;
+// 	// int * after = imap.data();
+// 	// for (int i = 0; i < imap.size(); ++i){
+//   //       afterFile << *after++ << " ";
+// 	// 		}
+// 	list();
+
 	// for(int i = 20; i < 40; i++){
 	// 	import("test" + to_string(i) + ".txt", "num" + to_string(i) + "test.txt");
 	// }
