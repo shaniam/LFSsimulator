@@ -203,7 +203,7 @@ void import(string file, string lfsFile){
 	// }
 
 	//cout << "here" << endl;
-	
+
 	inode.fileName = lfsFile;
 	inode.size = fileSize;
 	//cout << fileSize / KILO << endl;
@@ -269,7 +269,7 @@ void list(){
       char fileName[128];
       fileNameMap.read(fileName, 128);
 			string str(fileName);
-		
+
 			int block = imap[i];
 			int segment = (block / KILO) + 1;
 			int local = (block % KILO) * KILO;
@@ -293,7 +293,7 @@ void list(){
 			}
 			cout << "File Name: " << str << " File Size: " << inode.size << endl;
 		 }
-		
+
 		}
   //
 
@@ -581,49 +581,49 @@ int main(){
 	import("test0.txt", "num0test.txt");
 	list();
 //
-// 	srand(time(NULL));
-//
-// 	//test();
-//
-// 	hardDrive();
-//
-// 	import("other.txt", "hello.txt");
-// 	import("check.txt", "bye.txt");
-// 	for(int i = 0; i < 20; i++){
-// 		import("test" + to_string(i) + ".txt", "num" + to_string(i) + "test.txt");
-// 	}
-// 	cout << "list with everything" << endl;
-// 	list();
-// 	cout << "removing bye.txt" << endl;
-// 	removeFunction("bye.txt");
-//
-// 	// cout << "removing 20 random files" << endl;
-// 	// for(int i = 0; i < 20; i++){
-// 	// 	srand(i);
-// 	// 	int y = rand() % 40;
-// 	// 	cout << "removing num" << y << "test.txt" << endl;
-// 	// 	removeFunction("num" + to_string(y) + "test.txt");
-// 	// }
-//
-// 	cout << "list after 20 removal" << endl;
-// 	list();
-//
-// 	cout << "shutting down" << endl;
-// 	shutdown();
-// 	//list();
-// 	// cout << "before restart" << endl;
-// 	// int * before = imap.data();
-// 	// for (int i = 0; i < imap.size(); ++i){
-//   //       beforeFile << *before++ << " ";
-// 	// 		}
-// 	cout << "restarting" << endl;
-// 	restart();
-// 	cout << "after restart" << endl;
-// 	// int * after = imap.data();
-// 	// for (int i = 0; i < imap.size(); ++i){
-//   //       afterFile << *after++ << " ";
-// 	// 		}
-// 	list();
+	srand(time(NULL));
+
+	//test();
+
+	hardDrive();
+
+	import("other.txt", "hello.txt");
+	import("check.txt", "bye.txt");
+	for(int i = 0; i < 20; i++){
+		import("test" + to_string(i) + ".txt", "num" + to_string(i) + "test.txt");
+	}
+	cout << "list with everything" << endl;
+	list();
+	cout << "removing bye.txt" << endl;
+	removeFunction("bye.txt");
+
+	// cout << "removing 20 random files" << endl;
+	// for(int i = 0; i < 20; i++){
+	// 	srand(i);
+	// 	int y = rand() % 40;
+	// 	cout << "removing num" << y << "test.txt" << endl;
+	// 	removeFunction("num" + to_string(y) + "test.txt");
+	// }
+
+	cout << "list after 20 removal" << endl;
+	list();
+
+	cout << "shutting down" << endl;
+	shutdown();
+	//list();
+	// cout << "before restart" << endl;
+	// int * before = imap.data();
+	// for (int i = 0; i < imap.size(); ++i){
+  //       beforeFile << *before++ << " ";
+	// 		}
+	cout << "restarting" << endl;
+	restart();
+	cout << "after restart" << endl;
+	// int * after = imap.data();
+	// for (int i = 0; i < imap.size(); ++i){
+  //       afterFile << *after++ << " ";
+	// 		}
+	list();
 
 	// for(int i = 20; i < 40; i++){
 	// 	import("test" + to_string(i) + ".txt", "num" + to_string(i) + "test.txt");
