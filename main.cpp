@@ -430,8 +430,7 @@ void removeFunction(string lfsFileName) {
 
 void restart(){
 	fstream checkp("DRIVE/CHECKPOINT_REGION.txt", ios::binary | ios::out | ios::in);
-  vector<char> temp(160);
-	vector<char> temp1(8192);
+	vector<char> temp(160);
 	vector<char> temp2(KILO);
 	int segment, block;
 	bool flag = false;
@@ -461,11 +460,11 @@ void restart(){
 	// }
 
 	char buffer[160];
-  checkp.read(buffer, 160);
+	checkp.read(buffer, 160);
 
-  memcpy(checkpoint.data(), buffer, 160);
+	memcpy(checkpoint.data(), buffer, 160);
 
-  checkp.read(segments.data(), 64);
+	checkp.read(segments.data(), 64);
 
 	checkp.close();
 
@@ -492,18 +491,15 @@ void restart(){
 	seg.close();
 
 	for (int i = 0; i < 40; i++){
-    if (checkpoint.at(i) != 0){
-			segment = (checkpoint.at(i) / KILO);
+		if (checkpoint.at(i) != 0){
+			segment = (checkpoint.at(i) / KILO) + 1;
 			block = (checkpoint.at(i) % KILO) * KILO;
 			fstream segg("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary | ios::in | ios::out);
 
 			segg.seekg(block);
 			segg.read(temp2.data(), KILO);
-			//memcpy(&imap.at(i * (KILO / 4)), temp2.data(), KILO);
-			for (int i = 0; i < imap.size(); i++){
-
-			}
 			memcpy(&imap.at(i * (KILO / 4)), temp2.data(), KILO);
+			
 
 			seg.close();
 		}
@@ -581,7 +577,7 @@ int main(){
 	import("test0.txt", "num0test.txt");
 	list();
 //
-	srand(time(NULL));
+	//srand(time(NULL));
 
 	//test();
 
@@ -589,30 +585,31 @@ int main(){
 
 	import("other.txt", "hello.txt");
 	import("check.txt", "bye.txt");
-	for(int i = 0; i < 20; i++){
+	for(int i = 0; i < 40; i++){
 		import("test" + to_string(i) + ".txt", "num" + to_string(i) + "test.txt");
 	}
 	cout << "list with everything" << endl;
 	list();
 	cout << "removing bye.txt" << endl;
 	removeFunction("bye.txt");
+	srand(time(NULL));
+	
+	 cout << "removing 10 random files" << endl;
+	 for(int i = 0; i < 10; i++){
+	 	
+	 	int y = rand() % 40;
+	 	cout << "removing num" << y << "test.txt" << endl;
+		removeFunction("num" + to_string(y) + "test.txt");
+	 }
 
-	// cout << "removing 20 random files" << endl;
-	// for(int i = 0; i < 20; i++){
-	// 	srand(i);
-	// 	int y = rand() % 40;
-	// 	cout << "removing num" << y << "test.txt" << endl;
-	// 	removeFunction("num" + to_string(y) + "test.txt");
-	// }
-
-	cout << "list after 20 removal" << endl;
+	cout << "list after 10 removal" << endl;
 	list();
 
 	cout << "shutting down" << endl;
 	shutdown();
-	//list();
-	// cout << "before restart" << endl;
-	// int * before = imap.data();
+	list();
+	 cout << "before restart" << endl;
+	//int * before = imap.data();
 	// for (int i = 0; i < imap.size(); ++i){
   //       beforeFile << *before++ << " ";
 	// 		}
