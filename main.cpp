@@ -252,14 +252,16 @@ void import(string file, string lfsFile){
 
 void list(){
 	ifstream fileNameMap("DRIVE/FILENAMEMAP.txt");
-	vector<char> temp(1);
+	iNode inode1;
+
 
   for (int i = 0; i < 10000; i++){
     fileNameMap.seekg(i * 128);
-    fileNameMap.read(temp.data(), 1);
+		char temp[1];
+    fileNameMap.read(temp, 1);
 		//cout << "I:" << i << endl;
 		//cout << "valid: " << valid[0] << endl;
-    if (temp.at(0) != '0'){
+    if (temp[0] != '0'){
 			fileNameMap.seekg(i * 128);
 			char fileName[128];
       fileNameMap.read(fileName, 128);
@@ -272,22 +274,22 @@ void list(){
 			// cout << "segment: " << block << endl;
 			// cout << "Block: " << block << endl;
 
-		  iNode inode1;
-
 		  if(segNum == segment){
 				memcpy(&inode1, &openBlockInSegment[local], sizeof(iNode));
+
+				cout << "File Name: " << str << " File Size: " << inode1.size << endl;
 		  }
 			else{
-		    ifstream disk("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary);
+		  //   ifstream disk("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary);
+			//
+		  //   disk.seekg(local);
+		  //   char buffer[sizeof(iNode)];
+		  //   disk.read(buffer, sizeof(iNode));
+		  //   memcpy(&inode1, buffer, sizeof(iNode));
+			//
+		  //   disk.close();
+			// }
 
-		    disk.seekg(local);
-		    char buffer[sizeof(inode1)];
-		    disk.read(buffer, sizeof(inode1));
-		    memcpy(&inode1, buffer, sizeof(inode1));
-
-		    disk.close();
-			}
-			cout << "File Name: " << str << " File Size: " << inode1.size << endl;
 		  }
 		}
 
