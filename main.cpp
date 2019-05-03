@@ -127,7 +127,7 @@ void hardDrive(){
 void import(string file, string lfsFile){
 	//cout << "seg:" << segNum << endl;
 	ifstream fileIn(file, ios::binary);
-  
+
 	if (!fileIn.is_open()){
 		cout << "File not found!" << endl;
     exit(-1);
@@ -233,9 +233,9 @@ void import(string file, string lfsFile){
 	memcpy(&openBlockInSegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
 	//openBlock++;
 	check();
-	
+
 	segments.at(segNum - 1) = 1;
-	
+
 	checkpoint.at(frag) = openBlock + (segNum - 1) * KILO;
 	openBlock++;
 	//cout << "open" << openBlock << endl;
@@ -398,8 +398,9 @@ void removeFunction(string lfsFileName) {
 		}
 
 		openBlock = 0;
+		seg.close();
 	}
-
+}
 	//cout << "inodenum: " << iNodeNum << endl;
 	//cout << "test: " << imap.at(iNodeNum) << endl;
 
@@ -411,11 +412,12 @@ void removeFunction(string lfsFileName) {
 
   checkpoint[frag] = openBlock + (segNum - 1) * KILO;
 
+	segments.at(segNum - 1) = 1;
+
   openBlock++;
 
-	seg.close();
 	checkp.close();
-	}
+
 }
 
 void restart(){
@@ -489,7 +491,7 @@ void restart(){
 			segg.seekg(block);
 			segg.read(temp2.data(), KILO);
 			memcpy(&imap.at(i * (KILO / 4)), temp2.data(), KILO);
-			
+
 
 			seg.close();
 		}
@@ -501,14 +503,14 @@ void restart(){
 int main(){
 
 	 srand(time(NULL));
-	
+
 	 //test();
-	
+
      //hardDrive();
 	 restart();
 	 string mystr;
 	 cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', , to exit enter 'exit' " << endl;
-	
+
 	 while (getline(cin, mystr)){
 	 //cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', 'restart' to exit enter 'exit' " << endl;
 	 //cerr << mystr << endl;
@@ -516,7 +518,7 @@ int main(){
 	 exit(-1);
 	 }
 	 else if(mystr.compare("list")==0){
-	
+
 	 list();
 	 }
 	 else if(mystr.compare("shutdown")==0){
@@ -526,7 +528,7 @@ int main(){
 	 restart();
 	 }*/
 	 else{
-	
+
 	 string word;
 	 string filen1;
 	 string filen2;
@@ -559,7 +561,7 @@ int main(){
 	 }
 	 }
 	 cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown',  to exit enter 'exit' " << endl;
-	
+
 	 }
 
 // //test();
@@ -583,10 +585,10 @@ int main(){
 	//~ cout << "removing bye.txt" << endl;
 	//~ removeFunction("bye.txt");
 	//~ srand(time(NULL));
-	
+
 	 //~ cout << "removing 5 random files" << endl;
 	 //~ for(int i = 0; i < 5; i++){
-	 	
+
 	 	//~ int y = rand() % 40;
 	 	//~ cout << "removing num" << y << "test.txt" << endl;
 		//~ removeFunction("num" + to_string(y) + "test.txt");
