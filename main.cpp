@@ -16,7 +16,8 @@
 using namespace std;
 
 vector<char> openBlockInSegment(1048576);
-int openBlock = 0, segNum = 1;
+int openBlock = 0;
+int segNum = 1;
 vector<int> checkpoint(40);
 vector<int> imap(40 * KILO);
 vector<char> segments(64, 0);
@@ -31,12 +32,12 @@ void check(){
 		seg.write(openBlockInSegment.data(), KILO * KILO);
 
 		for (int i = 0; i < 64; i++){
-    	if (segments.at(i) == 0) {
+			if (segments.at(i) == 0) {
 				segments.at(i) = 1;
-      	segNum = i + 1;
+				segNum = i + 1;
 				flag = true;
-      	break;
-    	}
+			break;
+			}
   	}
 
 		seg.close();
@@ -124,9 +125,11 @@ void hardDrive(){
 }
 
 void import(string file, string lfsFile){
+	//cout << "seg:" << segNum << endl;
 	ifstream fileIn(file, ios::binary);
-  if (!fileIn.is_open()){
-    cout << "File not found!" << endl;
+  
+	if (!fileIn.is_open()){
+		cout << "File not found!" << endl;
     exit(-1);
   }
 
@@ -166,8 +169,8 @@ void import(string file, string lfsFile){
 
 	//Convert to C string so it can be used with .write
 	int n = lfsFile.length() + 1;
-  char fileCArray[n];
-  strcpy(fileCArray, lfsFile.c_str());
+	char fileCArray[n];
+	strcpy(fileCArray, lfsFile.c_str());
 
 	//Find proper spot in file (128byte blocks), write the name, and then fill remainder of block with garbage
 	fileNameMap.seekp(iNodeNum * 128);
@@ -223,50 +226,38 @@ void import(string file, string lfsFile){
 	memcpy(&openBlockInSegment.at(openBlock * KILO), &inode, sizeof(inode));
 	openBlock++;
 	check();
-
 	//cout << "open: " << openBlock << endl;
 
 	int frag = iNodeNum / (KILO / 4);
-
-	imap.at(iNodeNum) = (openBlock - 1) + ((segNum - 1) * KILO);
-
-  memcpy(&openBlockInSegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
-  //openBlock++;
+	imap.at(iNodeNum) = (openBlock - 1) + (segNum - 1) * KILO;
+	memcpy(&openBlockInSegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
+	//openBlock++;
 	check();
-
+	
 	segments.at(segNum - 1) = 1;
+	
 	checkpoint.at(frag) = openBlock + (segNum - 1) * KILO;
 	openBlock++;
 	//cout << "open" << openBlock << endl;
 
-	// fstream in("DRIVE/SEGMENT0.txt", ios::binary);
-	//
-	// char buffer[fileSize];
-	// in.read(buffer, fileSize);
-	//
-	// for(int i = 0; i < fileSize; i++){
-	// 	cout << buffer[i];
-	// }
-
 	fileNameMap.close();
-
 }
 
 void list(){
-	iNode var;
 	ifstream fileNameMap("DRIVE/FILENAMEMAP.txt");
+	vector<char> temp1(1);
+	char fileName[128];
+	vector<char> temp(sizeof(iNode));
 
   for (int i = 0; i < 10000; i++){
     //cout << "I: " << i << endl;
     fileNameMap.seekg(i * 128);
-	char temp[1];
-    fileNameMap.read(temp, 1);
+    fileNameMap.read(temp1.data(), 1);
     //cout << "Temp" << temp[0] << endl;
     //cout << "I:" << i << endl;
 		//cout << "valid: " << valid[0] << endl;
-    if (temp[0] != '0'){
+    if (temp1.at(0) != '0'){
       fileNameMap.seekg(i * 128);
-      char fileName[128];
       fileNameMap.read(fileName, 128);
 			string str(fileName);
 
@@ -284,9 +275,8 @@ void list(){
 		    ifstream disk("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary);
 
 		    disk.seekg(local);
-		    char buffer[sizeof(iNode)];
-		    disk.read(buffer, sizeof(iNode));
-		    memcpy(&inode, buffer, sizeof(iNode));
+		    disk.read(temp.data(), sizeof(iNode));
+		    memcpy(&inode, temp.data(), sizeof(iNode));
 
 		    disk.close();
 		    //cout << "finished" << endl;
@@ -307,7 +297,7 @@ void shutdown() {
 	ofstream checkp("DRIVE/CHECKPOINT_REGION.txt", ios::binary);
 	bool flag = false;
 
-  seg.write(openBlockInSegment.data(), 1024 * 1024);
+	seg.write(openBlockInSegment.data(), 1024 * 1024);
 
 	for (int i = 0; i < 64; i++){
     if (segments.at(i) == 0) {
@@ -340,22 +330,22 @@ void shutdown() {
 
 	checkp.close();
   seg.close();
-	//exit(0);
+	exit(0);
 }
 
 void removeFunction(string lfsFileName) {
 	int iNodeNum = -1;
-	char temp[1];
+	vector<char> temp(1);
+	char vectFile[128];
 	fstream fileNameMap("DRIVE/FILENAMEMAP.txt", ios::in | ios::out);
 
  	for (int i = 0; i < 10000; i++){
 	 	fileNameMap.seekg(i * 128);
-	 	fileNameMap.read(temp, 1);
+	 	fileNameMap.read(temp.data(), 1);
 
 		//cout << "temp: " << temp.at(0) << endl;
-	 	if (temp[0] != '0') {
+	 	if (temp.at(0) != '0') {
 			fileNameMap.seekg(i * 128);
-		 	char vectFile[128];
 		 	fileNameMap.read(vectFile, 128);
 		 	string strFileName(vectFile);
 
@@ -413,13 +403,13 @@ void removeFunction(string lfsFileName) {
 	//cout << "inodenum: " << iNodeNum << endl;
 	//cout << "test: " << imap.at(iNodeNum) << endl;
 
-  imap.at(iNodeNum) = -1;
+  imap.at(iNodeNum) = 0;
 
  	frag = iNodeNum / (KILO / 4);
 
   memcpy(&openBlockInSegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
 
-  checkpoint[frag] = openBlock + segNum * KILO;
+  checkpoint[frag] = openBlock + (segNum - 1) * KILO;
 
   openBlock++;
 
@@ -469,7 +459,7 @@ void restart(){
 	checkp.close();
 
   for(int i = 0; i < 40; i++){
-    if(checkpoint.at(i) >= 0 && checkpoint.at(i) > num){
+    if(checkpoint.at(i) > 0 && checkpoint.at(i) >= num){
       num = checkpoint.at(i);
       flag = true;
     }
@@ -482,7 +472,7 @@ void restart(){
 		openBlock = 0;
 	}
 
-	segNum = num / KILO;
+	segNum = 1 + num / KILO;
 
 	fstream seg("DRIVE/SEGMENT" + to_string(segNum) + ".txt", ios::binary | ios::in);
 
@@ -510,117 +500,117 @@ void restart(){
 
 int main(){
 
-	// srand(time(NULL));
-	//
-	// //test();
-	//
-        hardDrive();
-	// restart();
-	// string mystr;
-	// cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', , to exit enter 'exit' " << endl;
-	//
-	// while (getline(cin, mystr)){
-	// //cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', 'restart' to exit enter 'exit' " << endl;
-	// //cerr << mystr << endl;
-	// if (mystr.compare("exit")==0){
-	// exit(-1);
-	// }
-	// else if(mystr.compare("list")==0){
-	//
-	// list();
-	// }
-	// else if(mystr.compare("shutdown")==0){
-	// shutdown();
-	// }
-	// /*else if (mystr.compare("restart")==0){
-	// restart();
-	// }*/
-	// else{
-	//
-	// string word;
-	// string filen1;
-	// string filen2;
-	// vector<string> vecs={};
-	// for (auto x: mystr){
-	// if (x == ' '){
-	// vecs.push_back(word);
-	// word="";}
-	// else{
-	// word=word+x;
-	// }
-	// }
+	 srand(time(NULL));
+	
+	 //test();
+	
+     //hardDrive();
+	 restart();
+	 string mystr;
+	 cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', , to exit enter 'exit' " << endl;
+	
+	 while (getline(cin, mystr)){
+	 //cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', 'restart' to exit enter 'exit' " << endl;
+	 //cerr << mystr << endl;
+	 if (mystr.compare("exit")==0){
+	 exit(-1);
+	 }
+	 else if(mystr.compare("list")==0){
+	
+	 list();
+	 }
+	 else if(mystr.compare("shutdown")==0){
+	 shutdown();
+	 }
+	 /*else if (mystr.compare("restart")==0){
+	 restart();
+	 }*/
+	 else{
+	
+	 string word;
+	 string filen1;
+	 string filen2;
+	 vector<string> vecs={};
+	 for (auto x: mystr){
+	 if (x == ' '){
+	 vecs.push_back(word);
+	 word="";}
+	 else{
+	 word=word+x;
+	 }
+	 }
 	/*for (auto x: vecs){
 	cerr << x << endl;
 	}*/
-	// vecs.push_back(word);
-	// //cerr << vecs[0] << endl;
-	// //cerr << vecs.size() << endl;
-	// if (vecs[0].compare("import")==0 && vecs.size()==3){
-	// cerr << "import" << endl;
-	// import(vecs[1], vecs[2]);
-	// }
-	// else if(vecs[0].compare("remove")==0 && vecs.size()==2){
-	// cerr << "remove" << endl;
-	// removeFunction(vecs[1]);
-	// }
-	// else{
-	// cerr << "invalid command" << endl;
-	// continue;
-	// }
-	// }
-	// cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown',  to exit enter 'exit' " << endl;
-	//
-	// }
+	 vecs.push_back(word);
+	 //cerr << vecs[0] << endl;
+	 //cerr << vecs.size() << endl;
+	 if (vecs[0].compare("import")==0 && vecs.size()==3){
+	 cerr << "import" << endl;
+	 import(vecs[1], vecs[2]);
+	 }
+	 else if(vecs[0].compare("remove")==0 && vecs.size()==2){
+	 cerr << "remove" << endl;
+	 removeFunction(vecs[1]);
+	 }
+	 else{
+	 cerr << "invalid command" << endl;
+	 continue;
+	 }
+	 }
+	 cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown',  to exit enter 'exit' " << endl;
+	
+	 }
 
 // //test();
 //
-	import("test0.txt", "num0test.txt");
-	list();
+	//~ import("test0.txt", "num0test.txt");
+	//~ list();
 //
 	//srand(time(NULL));
 
 	//test();
 
-	hardDrive();
+	//~ hardDrive();
 
-	import("other.txt", "hello.txt");
-	import("check.txt", "bye.txt");
-	for(int i = 0; i < 40; i++){
-		import("test" + to_string(i) + ".txt", "num" + to_string(i) + "test.txt");
-	}
-	cout << "list with everything" << endl;
-	list();
-	cout << "removing bye.txt" << endl;
-	removeFunction("bye.txt");
-	srand(time(NULL));
+	//~ import("other.txt", "hello.txt");
+	//~ import("check.txt", "bye.txt");
+	//~ for(int i = 0; i < 40; i++){
+		//~ import("test" + to_string(i) + ".txt", "num" + to_string(i) + "test.txt");
+	//~ }
+	//~ cout << "list with everything" << endl;
+	//~ list();
+	//~ cout << "removing bye.txt" << endl;
+	//~ removeFunction("bye.txt");
+	//~ srand(time(NULL));
 	
-	 cout << "removing 10 random files" << endl;
-	 for(int i = 0; i < 10; i++){
+	 //~ cout << "removing 5 random files" << endl;
+	 //~ for(int i = 0; i < 5; i++){
 	 	
-	 	int y = rand() % 40;
-	 	cout << "removing num" << y << "test.txt" << endl;
-		removeFunction("num" + to_string(y) + "test.txt");
-	 }
+	 	//~ int y = rand() % 40;
+	 	//~ cout << "removing num" << y << "test.txt" << endl;
+		//~ removeFunction("num" + to_string(y) + "test.txt");
+	 //~ }
 
-	cout << "list after 10 removal" << endl;
-	list();
+	//~ cout << "list after 5 removal" << endl;
+	//~ list();
 
-	cout << "shutting down" << endl;
-	shutdown();
-	list();
-	 cout << "before restart" << endl;
-	//int * before = imap.data();
-	// for (int i = 0; i < imap.size(); ++i){
-  //       beforeFile << *before++ << " ";
-	// 		}
-	cout << "restarting" << endl;
-	restart();
-	cout << "after restart" << endl;
-	// int * after = imap.data();
-	// for (int i = 0; i < imap.size(); ++i){
-  //       afterFile << *after++ << " ";
-	// 		}
-	list();
+	//~ cout << "shutting down" << endl;
+	//~ shutdown();
+	//~ list();
+	 //~ cout << "before restart" << endl;
+	//~ //int * before = imap.data();
+	//~ // for (int i = 0; i < imap.size(); ++i){
+  //~ //       beforeFile << *before++ << " ";
+	//~ // 		}
+	//~ cout << "restarting" << endl;
+	//~ restart();
+	//~ //cout << "after restart" << endl;
+	//~ // int * after = imap.data();
+	//~ // for (int i = 0; i < imap.size(); ++i){
+  //~ //       afterFile << *after++ << " ";
+	//~ // 		}
+	//~ list();
 
 	// for(int i = 20; i < 40; i++){
 	// 	import("test" + to_string(i) + ".txt", "num" + to_string(i) + "test.txt");
