@@ -233,12 +233,13 @@ void import(string file, string lfsFile){
 	imap.at(iNodeNum) = (openBlock - 1) + segNum * KILO;
 	memcpy(&openBlockInSegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
 	//openBlock++;
-	check();
+
 
 	segments.at(segNum) = 1;
 
 	checkpoint.at(frag) = openBlock + segNum * KILO;
 	openBlock++;
+	check();
 	//cout << "open" << openBlock << endl;
 
 	fileNameMap.close();
@@ -263,7 +264,7 @@ void list(){
 			string str(fileName);
 
 			int block = imap[i];
-			int segment = (block / KILO);
+			int segment = block / KILO;
 			int local = (block % KILO) * KILO;
 			// cout << "Block: " << block << endl;
 			// cout << "segment: " << block << endl;
