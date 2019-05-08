@@ -12,12 +12,13 @@
 #include <ctime>
 #include "inode.h"
 #define KILO 1024
-
+#include <dirent.h>
+#include <errno.h>
 using namespace std;
 
 vector<char> openBlockInSegment(1048576);
 int openBlock = 0;
-int segNum = 1;
+int segNum = 0;
 vector<int> checkpoint(40);
 vector<int> imap(40 * KILO);
 vector<char> segments(64, 0);
@@ -211,7 +212,7 @@ void import(string file, string lfsFile){
 	inode.size = fileSize;
 	//cout << fileSize / KILO << endl;
 	for (int i = 0; i <= (fileSize / KILO); i++){
-	  inode.dataBlock[i] = openBlock + (segNum - 1) * KILO;
+	  inode.dataBlock[i] = openBlock + segNum * KILO;
 	  openBlock++;
 	  check();
   }
@@ -229,14 +230,14 @@ void import(string file, string lfsFile){
 	//cout << "open: " << openBlock << endl;
 
 	int frag = iNodeNum / (KILO / 4);
-	imap.at(iNodeNum) = (openBlock - 1) + (segNum - 1) * KILO;
+	imap.at(iNodeNum) = (openBlock - 1) + segNum * KILO;
 	memcpy(&openBlockInSegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
 	//openBlock++;
 	check();
 
-	segments.at(segNum - 1) = 1;
+	segments.at(segNum) = 1;
 
-	checkpoint.at(frag) = openBlock + (segNum - 1) * KILO;
+	checkpoint.at(frag) = openBlock + segNum * KILO;
 	openBlock++;
 	//cout << "open" << openBlock << endl;
 
@@ -262,7 +263,7 @@ void list(){
 			string str(fileName);
 
 			int block = imap[i];
-			int segment = (block / KILO) + 1;
+			int segment = (block / KILO);
 			int local = (block % KILO) * KILO;
 			// cout << "Block: " << block << endl;
 			// cout << "segment: " << block << endl;
@@ -338,6 +339,7 @@ void removeFunction(string lfsFileName) {
 	vector<char> temp(1);
 	char vectFile[128];
 	fstream fileNameMap("DRIVE/FILENAMEMAP.txt", ios::in | ios::out);
+	int frag;
 
  	for (int i = 0; i < 10000; i++){
 	 	fileNameMap.seekg(i * 128);
@@ -398,9 +400,11 @@ void removeFunction(string lfsFileName) {
 		}
 
 		openBlock = 0;
-		seg.close();
+		 seg.close();
+        checkp.close();
+		}
 	}
-}
+
 	//cout << "inodenum: " << iNodeNum << endl;
 	//cout << "test: " << imap.at(iNodeNum) << endl;
 
@@ -410,13 +414,11 @@ void removeFunction(string lfsFileName) {
 
   memcpy(&openBlockInSegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
 
-  checkpoint[frag] = openBlock + (segNum - 1) * KILO;
-
-	segments.at(segNum - 1) = 1;
+  checkpoint[frag] = openBlock + segNum * KILO;
 
   openBlock++;
 
-	checkp.close();
+	;
 
 }
 
@@ -461,7 +463,7 @@ void restart(){
 	checkp.close();
 
   for(int i = 0; i < 40; i++){
-    if(checkpoint.at(i) > 0 && checkpoint.at(i) >= num){
+    if(checkpoint.at(i) >= 0 && checkpoint.at(i) >= num){
       num = checkpoint.at(i);
       flag = true;
     }
@@ -474,7 +476,7 @@ void restart(){
 		openBlock = 0;
 	}
 
-	segNum = 1 + num / KILO;
+	segNum = num / KILO;
 
 	fstream seg("DRIVE/SEGMENT" + to_string(segNum) + ".txt", ios::binary | ios::in);
 
@@ -506,13 +508,32 @@ int main(){
 
 	 //test();
 
-     //hardDrive();
+	DIR* dir = opendir("DRIVE");
+	if (dir)
+	{
+    /* Directory exists. */
+    	closedir(dir);
+	//drive();
+	}
+	else if (ENOENT == errno)
+	{
+	cerr << "drive does not exist" << endl;
+	hardDrive();
+	test();
+    /* Directory does not exist. */
+	}
+	else
+	{
+    /* opendir() failed for some other reason. */
+	}
+
+//	 hardDrive();
 	 restart();
 	 string mystr;
-	 cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', , to exit enter 'exit' " << endl;
+	 cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', , to exit enter 'exit' " << endl;
 
 	 while (getline(cin, mystr)){
-	 //cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', 'restart' to exit enter 'exit' " << endl;
+	 //cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', 'restart' to exit enter 'exit' " << endl;
 	 //cerr << mystr << endl;
 	 if (mystr.compare("exit")==0){
 	 exit(-1);
@@ -560,7 +581,7 @@ int main(){
 	 continue;
 	 }
 	 }
-	 cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown',  to exit enter 'exit' " << endl;
+	 cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown',  to exit enter 'exit' " << endl;
 
 	 }
 
