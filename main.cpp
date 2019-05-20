@@ -16,7 +16,7 @@
 #include <errno.h>
 using namespace std;
 
-vector<char> openBlockInSegment(1048576);
+vector<char> memorySegment(1048576);
 int openBlock = 0;
 int segNum = 0;
 vector<int> checkpoint(40);
@@ -30,7 +30,7 @@ void check(){
 		ofstream seg("DRIVE/SEGMENT" + to_string(segNum) + ".txt", ios::binary);
 		bool flag = false;
 
-		seg.write(openBlockInSegment.data(), KILO * KILO);
+		seg.write(memorySegment.data(), KILO * KILO);
 
 		for (int i = 0; i < 64; i++){
 			if (segments.at(i) == 0) {
@@ -180,7 +180,7 @@ void import(string file, string lfsFile){
 
 	vector<char> inputFileBuffer(KILO);
 	//fileIn.read(inputFileBuffer.data(), KILO);
-	//memcpy(&openBlockInSegment.at(openBlock * KILO), inputFileBuffer.data(), fileSize);
+	//memcpy(&memorySegment.at(openBlock * KILO), inputFileBuffer.data(), fileSize);
 
 	for(int i = 0; i <= fileSize / KILO; i++){
 		//cout << "open: " << openBlock << endl;
@@ -191,19 +191,19 @@ void import(string file, string lfsFile){
 		// for(int x = 0; x < inputFileBuffer.size(); i++){
 		// 	cout << inputFileBuffer[x];
 		// }
-		memcpy(&openBlockInSegment.at(openBlock * KILO), inputFileBuffer.data(), KILO);
+		memcpy(&memorySegment.at(openBlock * KILO), inputFileBuffer.data(), KILO);
 		openBlock++;
 		check();
 	}
 	fileIn.close();
-	//memcpy(&openBlockInSegment.at(openBlock * KILO), inputFileBuffer.data(), fileSize);
+	//memcpy(&memorySegment.at(openBlock * KILO), inputFileBuffer.data(), fileSize);
 
 	// for(int i = 0; i < inputFileBuffer.size(); i++){
 	// 	cout << inputFileBuffer[i];
 	// }
 
-	// for(int i = 0; i < openBlockInSegment.size(); i++){
-	// 	cout << openBlockInSegment[i];
+	// for(int i = 0; i < memorySegment.size(); i++){
+	// 	cout << memorySegment[i];
 	// }
 
 	//cout << "here" << endl;
@@ -224,14 +224,14 @@ void import(string file, string lfsFile){
 	// 	cout << inode.dataBlock[i];
 	// }
 
-	memcpy(&openBlockInSegment.at(openBlock * KILO), &inode, sizeof(inode));
+	memcpy(&memorySegment.at(openBlock * KILO), &inode, sizeof(inode));
 	openBlock++;
 	check();
 	//cout << "open: " << openBlock << endl;
 
 	int frag = iNodeNum / (KILO / 4);
 	imap.at(iNodeNum) = (openBlock - 1) + segNum * KILO;
-	memcpy(&openBlockInSegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
+	memcpy(&memorySegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
 	//openBlock++;
 
 
@@ -271,7 +271,7 @@ void list(){
 			// cout << "Block: " << block << endl;
 
 		  if(segNum == segment){
-		    memcpy(&inode, &openBlockInSegment.at(local), sizeof(iNode));
+		    memcpy(&inode, &memorySegment.at(local), sizeof(iNode));
 		  }
 			else{
 		    ifstream disk("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary);
@@ -290,7 +290,7 @@ void list(){
   //
 
   //cout << "SegNum: " << segNum << " segment: " << segment << endl;
-			//cout << "open: " << openBlockInSegment.at(local) << endl;
+			//cout << "open: " << memorySegment.at(local) << endl;
   fileNameMap.close();
 }
 
@@ -299,7 +299,7 @@ void shutdown() {
 	ofstream checkp("DRIVE/CHECKPOINT_REGION.txt", ios::binary);
 	bool flag = false;
 
-	seg.write(openBlockInSegment.data(), 1024 * 1024);
+	seg.write(memorySegment.data(), 1024 * 1024);
 
 	for (int i = 0; i < 64; i++){
     if (segments.at(i) == 0) {
@@ -379,7 +379,7 @@ void removeFunction(string lfsFileName) {
 		bool flag = false;
 		int frag;
 
-		seg.write(openBlockInSegment.data(), KILO * KILO);
+		seg.write(memorySegment.data(), KILO * KILO);
 
 		for (int i = 0; i < 64; ++i){
 	    if (segments.at(i) == 0) {
@@ -413,7 +413,7 @@ void removeFunction(string lfsFileName) {
 
  	frag = iNodeNum / (KILO / 4);
 
-  memcpy(&openBlockInSegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
+  memcpy(&memorySegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
 
   checkpoint[frag] = openBlock + segNum * KILO;
 
@@ -431,7 +431,7 @@ void restart(){
 	bool flag = false;
 	int num = 0;
 
-	// seg.write(openBlockInSegment.data(), 1024 * 1024);
+	// seg.write(memorySegment.data(), 1024 * 1024);
 	//
 	// for (int i = 0; i < 64; i++){
   //   if (segments.at(i) == 0) {
@@ -481,13 +481,13 @@ void restart(){
 
 	fstream seg("DRIVE/SEGMENT" + to_string(segNum) + ".txt", ios::binary | ios::in);
 
-  seg.read(openBlockInSegment.data(), KILO * KILO);
+  seg.read(memorySegment.data(), KILO * KILO);
 
 	seg.close();
 
 	for (int i = 0; i < 40; i++){
 		if (checkpoint.at(i) != 0){
-			segment = (checkpoint.at(i) / KILO) + 1;
+			segment = checkpoint.at(i) / KILO;
 			block = (checkpoint.at(i) % KILO) * KILO;
 			fstream segg("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary | ios::in | ios::out);
 
