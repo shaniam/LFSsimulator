@@ -503,6 +503,109 @@ void restart(){
 	checkp.close();
 }
 
+void display(string lfs_filename, string total, string starter){
+	fstream fileNameMap("DRIVE/FILENAMEMAP.txt", ios::in | ios::out);
+	vector<char> temp(1);
+	int iNodeNum = -1;
+	int howmany = stoi(total);
+	int start = stoi(starter);
+
+	//Find an open spot in the file, fileNameMap was initialized to all 0's so anything that's not a 0 is used
+  for (int i = 0; i < 10000; i++){
+		// cout << "open: " << openBlock << endl;
+		// cout << "I: " << i << endl;
+    fileNameMap.seekg(i * 128);
+    fileNameMap.read(temp.data(), 1);
+		//cout << "segNum: " << segNum << endl;
+		//string str(temp.begin(), temp.end());
+		//cout << "Str: " << str << endl;
+
+		if (temp.at(0) == '0'){
+      iNodeNum = i;
+			break;
+		}
+	}
+
+	//string str(temp);
+	//cout << "Str: " << iNodeNum << endl;
+
+	//every 128th bit is set in the file, then the disk must be full
+	if(iNodeNum == -1){
+		cerr << "Hard Drive Full!" << endl;
+		exit(-1);
+	}
+
+	int block = imap[iNodeNum];
+  int segment = block / KILO;
+  int local = (block % KILO) * KILO;
+
+  if (segment != segNum){
+    ifstream seg("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary);
+
+    seg.seekg(local);
+    char buffer[KILO];
+    seg.read(buffer, KILO);
+
+    memcpy(&inode, buffer, sizeof(inode));
+
+    seg.close();
+  }else{
+    memcpy(&inode, &memorySegment[local], sizeof(inode));
+	}
+
+	//printBlock(meta.block_locations[i], start_byte, end_byte, (i == start_byte/BLOCK_SIZE), (i == end_byte/BLOCK_SIZE));
+
+	local += 1023;
+
+	for (int i = start; i <= (howmany + start); i++){
+		// int segment = (inode.dataBlock[i] / KILO);
+		// int local = (inode.dataBlock[i] % KILO) * KILO;
+
+		// cout << "Segment: " << segment << endl;
+		// cout << "Local: " << local << endl;
+
+
+
+  	// if (i == start / KILO){
+		// 	local += start;
+		// }
+
+	  unsigned int buffer_size = 1;
+
+	  // if ((i == start / KILO) && (i == (howmany + start) / KILO)){
+		// 	buffer_size = (howmany + start) - start;
+		// }
+	  // else if (i == (howmany + start) / KILO){
+		// 	buffer_size = (howmany + start) % KILO;
+		// }
+	  // else if (i == start / KILO){
+		// 	buffer_size = KILO - (start % KILO);
+		// }
+	  // else{
+		// 	buffer_size = KILO;
+		// }
+
+	  char buffer[1];
+
+	  if (segment != segNum){
+	    ifstream segg("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary);
+
+	    segg.seekg(local);
+	    segg.read(buffer, 1);
+
+	    segg.close();
+	  }else{
+	    memcpy(buffer, &memorySegment[local], 1);
+	  }
+
+	  cout << buffer[0];
+		local++;
+		// if(local == (howmany + start)){
+		// 	cout << endl;
+		// }
+	}
+}
+
 int main(){
 
 	 srand(time(NULL));
@@ -531,7 +634,7 @@ int main(){
 //	 hardDrive();
 	 restart();
 	 string mystr;
-	 cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', , to exit enter 'exit' " << endl;
+	 cerr << "please enter your command in the following formats!  'display <lfs_filename> <howmany> <start>', 'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', , to exit enter 'exit' " << endl;
 
 	 while (getline(cin, mystr)){
 	 //cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', 'restart' to exit enter 'exit' " << endl;
@@ -570,19 +673,24 @@ int main(){
 	 //cerr << vecs[0] << endl;
 	 //cerr << vecs.size() << endl;
 	 if (vecs[0].compare("import")==0 && vecs.size()==3){
-	 cerr << "import" << endl;
-	 import(vecs[1], vecs[2]);
+		 cerr << "import" << endl;
+		 import(vecs[1], vecs[2]);
 	 }
 	 else if(vecs[0].compare("remove")==0 && vecs.size()==2){
-	 cerr << "remove" << endl;
-	 removeFunction(vecs[1]);
+		 cerr << "remove" << endl;
+		 removeFunction(vecs[1]);
+	 }
+	 else if(vecs[0].compare("display") == 0 && vecs.size() == 4){
+		 cerr << "display" << endl;
+		 display(vecs[1], vecs[2], vecs[3]);
+		 cerr << endl;
 	 }
 	 else{
 	 cerr << "invalid command" << endl;
 	 continue;
 	 }
 	 }
-	 cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown',  to exit enter 'exit' " << endl;
+	 cerr << "please enter your command in the following formats!  'display <lfs_filename> <howmany> <start>' 'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown',  to exit enter 'exit' " << endl;
 
 	 }
 

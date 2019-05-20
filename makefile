@@ -3,5 +3,5 @@ all: main.cpp inode.h
 
 clean:
 	rm -rf main
-	rm -rf *.txt
+	rm -rf test*.txt
 	rm -r DRIVE
