@@ -27,7 +27,6 @@ vector<int> imap(40 * KILO);
 vector<char> segments(64, 0);
 int num = 0;
 iNode inode;
-iNode previous;
 
 void check(){
 	if (openBlock == 1023){
@@ -650,51 +649,16 @@ void display(string lfs_filename, string howManyStr, string startStr){
 
 	//cout << "iNodeNum: " << iNodeNum << endl;
 
-	int localPrev;
 	//string str(temp);
 	//cout << "Str: " << iNodeNum << endl;
-
-	//every 128th bit is set in the file, then the disk must be full
-	if(iNodeNum == -1){
-		cerr << "Hard Drive Full!" << endl;
-		exit(-1);
-	}
-	if(iNodeNum > 0){
-		int blockPrev = imap[iNodeNum - 1];
-		int segmentPrev = blockPrev / KILO;
-		localPrev = (blockPrev % KILO) * KILO;
-
-		cout << "block: " << blockPrev << endl;
-		cout << "segment: " << segmentPrev << endl;
-		cout << "local: " << localPrev << endl;
-
-		if (segmentPrev != segNum){
-			ifstream seg("DRIVE/SEGMENT" + to_string(segmentPrev) + ".txt", ios::binary);
-			seg.seekg(localPrev);
-			char buffer[KILO];
-			seg.read(buffer, KILO);
-
-			memcpy(&previous, buffer, sizeof(previous));
-
-			seg.close();
-		}
-		else{
-			memcpy(&previous, &memorySegment[localPrev], sizeof(previous));
-		}
-	}
-	else{
-		localPrev = 0;
-	}
-
-	// cout << "prev: " << localPrev << endl;
 
 	int block = imap[iNodeNum];
   int segment = block / KILO;
   int local = (block % KILO) * KILO;
 
-	cout << "block: " << block << endl;
-	cout << "segment: " << segment << endl;
-	cout << "local: " << local << endl;
+	// cout << "block: " << block << endl;
+	// cout << "segment: " << segment << endl;
+	// cout << "local: " << local << endl;
 
   if (segment != segNum){
     ifstream seg("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary);
@@ -710,12 +674,8 @@ void display(string lfs_filename, string howManyStr, string startStr){
     memcpy(&inode, &memorySegment[local], sizeof(inode));
 	}
 
-	if(iNodeNum == 0){
-		local = 0;
-	}
-
 	if(end > inode.size){
-		cerr << "setting to file size" << endl;
+		cerr << "will go past file, setting end byte to file size" << endl << endl;
 		end = inode.size;
 	}
 	else if(start > inode.size){
@@ -725,62 +685,43 @@ void display(string lfs_filename, string howManyStr, string startStr){
 
 	// cout << "size: " << inode.size << endl;
 	// cout << "name: " << inode.fileName << endl;
-	cout << "local: " << local << endl;
-	cout << "localPrev: " << localPrev << endl;
-	cout << "start: " << start << endl;
-	cout << "end: " << end << endl;
-	cout << "initial: " << (local - localPrev) + start << endl;
-	cout << "ending: " << (local - localPrev) + end << endl;
 
-	for (int i = (local - localPrev) + start; i < (local - localPrev) + end; i++){
-		// int segment = (inode.dataBlock[i] / KILO);
-		// int local = (inode.dataBlock[i] % KILO) * KILO;
+	for (int i = start/KILO; i <= end/KILO; i++){
+		// cout << "start: " << start / KILO << endl;
+		// cout << "end: " << end / KILO << endl;
+		// cout << "block seg: " << segment_no << endl;
+		// cout << "block local: " << local_block_pos << endl;
 
-		// cout << "Segment: " << segment << endl;
-		// cout << "Local: " << local << endl;
+		//if (i == start/KILO) local += start;
 
+		int buffer_size;
+		if ((i == start/KILO) && (i == end/KILO)) buffer_size = end - start;
+		else if (i == end/KILO) buffer_size = end % KILO;
+		else if (i == start/KILO) buffer_size = KILO - (start % KILO);
+		else buffer_size = KILO;
 
+		char buffer[buffer_size];
 
-  	// if (i == start / KILO){
-		// 	local += start;
-		// }
+		if (segment != segNum){
+			ifstream seg_file("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary);
 
-	  unsigned int buffer_size = 1;
+			seg_file.seekg(local + start);
+			seg_file.read(buffer, buffer_size);
 
-	  // if ((i == start / KILO) && (i == (howmany + start) / KILO)){
-		// 	buffer_size = (howmany + start) - start;
-		// }
-	  // else if (i == (howmany + start) / KILO){
-		// 	buffer_size = (howmany + start) % KILO;
-		// }
-	  // else if (i == start / KILO){
-		// 	buffer_size = KILO - (start % KILO);
-		// }
-	  // else{
-		// 	buffer_size = KILO;
-		// }
+			seg_file.close();
+		}else{
+			if(iNodeNum == 0){
+				memcpy(buffer, &memorySegment[start + (i * KILO)], buffer_size);
+			}
+			else{
+				memcpy(buffer, &memorySegment[local + (i * KILO) + start], buffer_size);
+			}
+		}
 
-	  char buffer[1];
-
-	  if (segment != segNum){
-	    ifstream segg("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary);
-
-	    segg.seekg(local);
-	    segg.read(buffer, 1);
-
-	    segg.close();
-	  }else{
-	    memcpy(buffer, &memorySegment[local], 1);
-	  }
-
-	  cout << memorySegment[i];
-		// if(local == (howmany + start)){
-		// 	cout << endl;
-		// }
-	}
-
+		for (int i = 0; i < buffer_size; ++i)
+			printf("%c", buffer[i]);
+		}
 }
-
 
 int main(){
 
