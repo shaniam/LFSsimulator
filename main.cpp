@@ -26,6 +26,7 @@ int ssb[KILO][2];
 vector<int> imap(40 * KILO);
 vector<char> segments(64, 0);
 int num = 0;
+int localNum;
 iNode inode;
 
 void check(){
@@ -655,10 +656,16 @@ void display(string lfs_filename, string howManyStr, string startStr){
 	int block = imap[iNodeNum];
   int segment = block / KILO;
   int local = (block % KILO) * KILO;
+	int numBlocks = (block % KILO);
+
+	int blockPrev = imap[iNodeNum - 1];
+  int segmentPrev = block / KILO;
+  int localPrev = (block % KILO) * KILO;
 
 	// cout << "block: " << block << endl;
 	// cout << "segment: " << segment << endl;
 	// cout << "local: " << local << endl;
+	// cout << "num blocks: " << numBlocks << endl;
 
   if (segment != segNum){
     ifstream seg("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary);
@@ -675,8 +682,7 @@ void display(string lfs_filename, string howManyStr, string startStr){
 	}
 
 	if(end > inode.size){
-		cerr << "will go past file, setting end byte to file size" << endl << endl;
-		end = inode.size;
+		end = inode.size - start;
 	}
 	else if(start > inode.size){
 		cerr << "can't start after end of file" << endl;
@@ -687,14 +693,29 @@ void display(string lfs_filename, string howManyStr, string startStr){
 	// cout << "name: " << inode.fileName << endl;
 
 	for (int i = start/KILO; i <= end/KILO; i++){
+		//int blocksTaken = inode.dataBlock[i] % KILO;
 		// cout << "start: " << start / KILO << endl;
 		// cout << "end: " << end / KILO << endl;
 		// cout << "block seg: " << segment_no << endl;
+		//cout << "blocks taken: " << inode.dataBlock[i] / KILO;
 		// cout << "block local: " << local_block_pos << endl;
 
 		//if (i == start/KILO) local += start;
-
+		int next;
 		int buffer_size;
+		if(iNodeNum == 0){
+			next = 0;
+			localNum = local;
+		}
+		else{
+			for(int j = 0; j <= iNodeNum; j++){
+				next += localNum + 2048;
+				cout << "inode: " << iNodeNum << endl;
+				cout << "next: " << next << endl;
+				cout << "local: " << local << endl;
+			}
+		}
+
 		if ((i == start/KILO) && (i == end/KILO)) buffer_size = end - start;
 		else if (i == end/KILO) buffer_size = end % KILO;
 		else if (i == start/KILO) buffer_size = KILO - (start % KILO);
@@ -712,9 +733,13 @@ void display(string lfs_filename, string howManyStr, string startStr){
 		}else{
 			if(iNodeNum == 0){
 				memcpy(buffer, &memorySegment[start + (i * KILO)], buffer_size);
+				// cout << "Next; " << next << endl;
+				// cout << "local: " << local << endl;
 			}
 			else{
-				memcpy(buffer, &memorySegment[local + (i * KILO) + start], buffer_size);
+				memcpy(buffer, &memorySegment[next + (i * KILO)], buffer_size);
+				// cout << "Next; " << next << endl;
+				// cout << "local: " << local << endl;
 			}
 		}
 
@@ -801,7 +826,7 @@ int main(){
 	 else if(vecs[0].compare("display") == 0 && vecs.size() == 4){
 		 cerr << "display" << endl;
 		 display(vecs[1], vecs[2], vecs[3]);
-		 cerr << endl;
+		 cerr << endl << endl;
 	 }
 
 	 else{
