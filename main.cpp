@@ -843,7 +843,8 @@ void display(string lfs_filename, string howManyStr, string startStr){
 
 void clean(){
 	vector<char> dirtySegmentVector;
-	vector<char> dirtySegment(1048576);
+	vector<char> dirtySegment(1016 * KILO);
+	vector<char> dirtySSB(8 * KILO);
 	int cleanedSegCount = 0;
 	int cleanSegNum;
 
@@ -862,7 +863,11 @@ void clean(){
 
 	while(cleanedSegCount < 6){
 		ifstream seg("DRIVE/SEGMENT" + to_string(dirtySegmentVector[0]) + ".txt"), ios::binary);
-		seg.read(dirtySegment.data(), KILO * KILO);
+		seg.read(dirtySegment.data(), 1016 * KILO);
+		seg.read(dirtySSB.data(), 8 * KILO);
+		for(int i = 0; i < dirtySSB.size(); i++){
+
+		}
 	}
 }
 
