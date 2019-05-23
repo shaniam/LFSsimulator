@@ -25,9 +25,9 @@ int segNum = 0;
 vector<int> checkpoint(40);
 int ssb[KILO][2];
 vector<int> imap(40 * KILO);
-vector<char> segments(64, 0);
+vector<char> segments(64, '0');
 int num = 0;
-int localNum;
+int open = 0;
 int numFileBlocks = 0;
 int openBlockTemp = 0;
 iNode inode;
@@ -44,10 +44,10 @@ void signalHandler(int signum) {
 
 void check(){
 
-	cout << "Num File Blocks: " << numFileBlocks << endl;
-	cout << "open Blocks: " << openBlock << endl;
-	cout << "total right: " << (KILO - (openBlock + openBlockTemp + 2)) << endl;
-	cout << "truth: " << (numFileBlocks > (KILO - (openBlock + openBlockTemp + 2))) << endl;
+	// cout << "Num File Blocks: " << numFileBlocks << endl;
+	// cout << "open Blocks: " << openBlock << endl;
+	// cout << "total right: " << (KILO - (openBlock + openBlockTemp + 2)) << endl;
+	// cout << "truth: " << (numFileBlocks > (KILO - (openBlock + openBlockTemp + 2))) << endl;
 
 
 	if (openBlock == 1024 || (numFileBlocks > (KILO - (openBlock + openBlockTemp + 2)))){
@@ -59,7 +59,7 @@ void check(){
 
 		for (int i = 0; i < 64; i++){
 			if (segments.at(i) == 0) {
-				segments.at(i) = 1;
+				segments.at(i) = '1';
 				segNum = i + 1;
 				flag = true;
 			break;
@@ -68,6 +68,7 @@ void check(){
 
 		seg.close();
 		openBlock = 0;
+		open = 0;
 
 		if(flag == false){
   		cerr << "No more clean blocks!" << endl;
@@ -217,7 +218,7 @@ void import(string file, string lfsFile){
 	// cout << "Num File Blocks: " << numFileBlocks << endl;
 	// cout << "open Blocks: " << openBlock << endl;
 	// cout << "total right: " << (KILO - (openBlock + openBlockTemp + 2)) << endl;
-	// cout << "truth: " << (numFileBlocks < (KILO - (openBlock + openBlockTemp + 2))) << endl;
+	// cout << "t`ruth: " << (numFileBlocks < (KILO - (openBlock + openBlockTemp + 2))) << endl;
 
 	if(numFileBlocks < (KILO - (openBlock + openBlockTemp + 2))){
 
@@ -234,7 +235,7 @@ void import(string file, string lfsFile){
 			memcpy(&memorySegment.at(openBlock * KILO), inputFileBuffer.data(), KILO);
 			openBlock++;
 			numFileBlocks++;
-			check();
+			check();`
 		}
 
 
@@ -255,9 +256,10 @@ void import(string file, string lfsFile){
 		inode.size = fileSize;
 		//cout << fileSize / KILO << endl;
 		for (int i = 0; i <= (fileSize / KILO); i++){
-		  inode.dataBlock[i] = openBlock + segNum * KILO;
-			ssb[openBlock][0] = iNodeNum;
-			ssb[openBlock][1] = i;
+		  inode.dataBlock[i] = open + segNum * KILO;
+			ssb[open][0] = iNodeNum;
+			ssb[open][1] = i;
+			open++;
 	  }
 
 
@@ -269,11 +271,12 @@ void import(string file, string lfsFile){
 		// 	cout << inode.dataBlock[i];
 		// }
 
-		ssb[openBlock][0] = iNodeNum;
-	  ssb[openBlock][1] = -1;
+		ssb[open][0] = iNodeNum;
+	  ssb[open][1] = -1;
 
 		memcpy(&memorySegment.at(openBlock * KILO), &inode, sizeof(inode));
 		openBlock++;
+		open++;
 		numFileBlocks++;
 		check();
 
@@ -284,13 +287,15 @@ void import(string file, string lfsFile){
 		memcpy(&memorySegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
 		//openBlock++;
 
-		ssb[openBlock][0] = -1;
-		ssb[openBlock][1] = frag;
+		ssb[open][0] = -1;
+		ssb[open][1] = frag;
 
 		checkpoint.at(frag) = openBlock + segNum * KILO;
 		openBlock++;
 		numFileBlocks++;
 		check();
+
+		open++;
 		// for(int i = 0; i < 40; i++){
 		// 	cout << "check: " << checkpoint[i] << endl;
 		// }
@@ -578,7 +583,7 @@ void removeFunction(string lfsFileName) {
   		checkp.write(temp.data(), 160);
   		checkp.write(segments.data(), 64);
 
-  		shutdown();
+  		exit(-1);
 		}
 
 		openBlock = 0;
@@ -596,8 +601,8 @@ void removeFunction(string lfsFileName) {
 
   memcpy(&memorySegment.at(openBlock * KILO), &imap.at(frag * (KILO / 4)), KILO);
 
-	ssb[openBlock][0] = -1;
-  ssb[openBlock][1] = frag;
+	ssb[open][0] = -1;
+  ssb[open][1] = frag;
 
   checkpoint[frag] = openBlock + segNum * KILO;
 
@@ -836,6 +841,31 @@ void display(string lfs_filename, string howManyStr, string startStr){
 		}
 }
 
+void clean(){
+	vector<char> dirtySegmentVector;
+	vector<char> dirtySegment(1048576);
+	int cleanedSegCount = 0;
+	int cleanSegNum;
+
+	for(int i = 0; i < segments.size(); i++){
+		if(segments[i] == '1'){
+			dirtySegmentVector.push_back(i)
+		}
+	}
+
+	for(int i = 0; i < segments.size(); i++){
+		if(segments[i] != '1'){
+			cleanSegNum = i;
+			break;
+		}
+	}
+
+	while(cleanedSegCount < 6){
+		ifstream seg("DRIVE/SEGMENT" + to_string(dirtySegmentVector[0]) + ".txt"), ios::binary);
+		seg.read(dirtySegment.data(), KILO * KILO);
+	}
+}
+
 void overwrite(string lfs_filename, string howManyStr, string startStr, string charStr){
 	ifstream fileNameMap("DRIVE/FILENAMEMAP.txt");
 	int iNodeNum = -1;
@@ -1013,7 +1043,15 @@ int main(){
 
 		 restart();
 		 string mystr;
-		 cerr << "please enter your command in the following formats!  'overwrite <lfs_filename> <howmany> <start> <c>', 'display <lfs_filename> <howmany> <start>', 'cat <lfs_filename>', 'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', , to exit enter 'exit' " << endl;
+		 cerr << "please enter your command in the following formats!" <<
+		 "\n\t'clean'," <<
+		 "\n\t'overwrite <lfs_filename> <howmany> <start> <c>'," <<
+		 "\n\t'display <lfs_filename> <howmany> <start>', 'cat <lfs_filename>'," <<
+		 "\n\t'list'," <<
+		 "\n\t'remove <lfs_filename>'," <<
+		 "\n\t'import <filename> <lfs_filename>'," <<
+		 "\n\t'shutdown'," <<
+		 "\n\tto exit enter 'exit' " << endl;
 
 		 while (getline(cin, mystr)){
 		 //cerr << "please enter your command in the following formats!  'list' , 'remove <lfs_filename>' , 'import <filename> <lfs_filename>', 'shutdown', 'restart' to exit enter 'exit' " << endl;
@@ -1074,6 +1112,10 @@ int main(){
 		 else if(vecs[0].compare("overwrite") == 0 && vecs.size() == 5){
 			 cerr << "overwrite" << endl;
 			 overwrite(vecs[1], vecs[2], vecs[3], vecs[4]);
+		 }
+		 else if(vecs[0].compare("clean") == 0 && vecs.size() == 1){
+			 cerr << "clean" << endl;
+			 clean();
 		 }
 
 		 else{
