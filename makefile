@@ -5,4 +5,5 @@ clean:
 	rm -rf main
 	rm -rf test*.txt
 	rm -rf a.txt
+	rm -rf outFile.txt
 	rm -r DRIVE
