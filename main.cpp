@@ -447,9 +447,8 @@ void cat(string lfs_filename){
   		if(segment != segNum){
   			ifstream seg_file("DRIVE/SEGMENT" + to_string(segment) + ".txt", ios::binary);
 
-        if(i == 0){
-          seg_file.seekg(local);
-        }
+          seg_file.seekg(next + (i * KILO));
+
 
   			seg_file.read(buffer.data(), KILO);
 
